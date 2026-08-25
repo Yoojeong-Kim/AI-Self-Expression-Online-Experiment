@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Language, Step, ExperimentGroup } from '@/types/experiment';
+import { Language, Step, ExperimentGroup, ExperimentCondition } from '@/types/experiment';
 import { translations } from '@/data/locales';
 import { Globe, CheckCircle2, Circle } from 'lucide-react';
 
