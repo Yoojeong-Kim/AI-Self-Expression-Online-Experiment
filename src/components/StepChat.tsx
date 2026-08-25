@@ -64,19 +64,52 @@ export const StepChat: React.FC<StepChatProps> = ({
     setMessages(initMessages);
   }, [language, t.aiGreeting, t.systemTopicChanged, activeTopics, currentTiming, stimulusImageUrl]);
 
-  // Secret Shortcut: Ctrl + Shift + S (or Alt + S) to instantly unlock 10 mins & skip
+  const [devNotice, setDevNotice] = useState<string | null>(null);
+
+  // Secret Shortcut: Ctrl + Shift + S / Alt + S / F2 / IME compatible
   useEffect(() => {
+    const triggerSkip = () => {
+      setElapsedSeconds(TOTAL_REQUIRED_SECONDS);
+      setDevSkipUnlocked(true);
+      setDevNotice(language === 'ko' ? '⚡ 연구원 스킵: 10분 완료 처리되었습니다.' : '⚡ Researcher Skip: 10 mins unlocked.');
+      setTimeout(() => setDevNotice(null), 3000);
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey && e.shiftKey && (e.key === 'S' || e.key === 's')) ||
-          (e.altKey && (e.key === 'S' || e.key === 's'))) {
+      const isS = e.code === 'KeyS' || e.key === 's' || e.key === 'S' || e.key === 'ㄴ';
+      
+      // Ctrl + Shift + S or Alt + S or F2
+      if (((e.ctrlKey || e.metaKey) && e.shiftKey && isS) || 
+          (e.altKey && isS) || 
+          e.key === 'F2') {
         e.preventDefault();
-        setElapsedSeconds(TOTAL_REQUIRED_SECONDS);
-        setDevSkipUnlocked(true);
+        e.stopPropagation();
+        triggerSkip();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [language]);
+
+  // Hidden mouse click trigger: 3 rapid clicks on timer badge
+  const clickCountRef = useRef<number>(0);
+  const clickTimerRef = useRef<any>(null);
+
+  const handleTimerBadgeClick = () => {
+    clickCountRef.current += 1;
+    if (clickCountRef.current >= 3) {
+      setElapsedSeconds(TOTAL_REQUIRED_SECONDS);
+      setDevSkipUnlocked(true);
+      setDevNotice(language === 'ko' ? '⚡ 연구원 스킵: 10분 완료 처리되었습니다.' : '⚡ Researcher Skip: 10 mins unlocked.');
+      setTimeout(() => setDevNotice(null), 3000);
+      clickCountRef.current = 0;
+    }
+    clearTimeout(clickTimerRef.current);
+    clickTimerRef.current = setTimeout(() => {
+      clickCountRef.current = 0;
+    }, 800);
+  };
 
   // Main 10-minute continuous timer & 3-minute stage transition
   useEffect(() => {
@@ -212,6 +245,14 @@ export const StepChat: React.FC<StepChatProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto py-4 px-3 sm:px-4">
+      {/* Dev Skip Notification Toast */}
+      {devNotice && (
+        <div className="mb-3 p-3 bg-amber-500 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-between animate-bounce">
+          <span>{devNotice}</span>
+          <span className="text-xs bg-amber-600 px-2 py-0.5 rounded">하단 버튼 활성화됨</span>
+        </div>
+      )}
+
       {/* Top Mission & 10-Min Timer Bar */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 mb-3">
         <div className="flex items-center justify-between gap-3 mb-2">
@@ -224,12 +265,14 @@ export const StepChat: React.FC<StepChatProps> = ({
             </h2>
           </div>
 
-          {/* 10-min Countdown Badge */}
+          {/* 10-min Countdown Badge (Supports 3 rapid clicks to skip) */}
           <div
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+            onClick={handleTimerBadgeClick}
+            title="타이머"
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all select-none cursor-pointer ${
               isTimeCompleted
                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-300'
-                : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                : 'bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100'
             }`}
           >
             <Clock className="w-3.5 h-3.5" />
