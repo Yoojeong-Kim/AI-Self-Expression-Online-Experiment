@@ -15,7 +15,7 @@ interface StepChatProps {
   onFinishChat: (totalSeconds: number, messages: ChatMessage[]) => void;
 }
 
-const TOTAL_REQUIRED_SECONDS = 600; // 10 minutes (600s)
+const TOTAL_REQUIRED_SECONDS = 360; // 6 minutes (360s, 2 mins per stage)
 
 export const StepChat: React.FC<StepChatProps> = ({
   language,
@@ -44,9 +44,12 @@ export const StepChat: React.FC<StepChatProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const stageRef = useRef<number>(1);
 
-  // Initial AI greeting on mount (Pre-disclosure shows image immediately)
+  // Initial AI greeting on mount (Pre-disclosure shows image immediately with fixed prompt)
   useEffect(() => {
     const isPre = currentTiming === 'pre';
+    const preGreetingKo = '안녕! 만나서 반가워. 이게 내 사진이야! 내 모습을 보니 어떻게 생각해?';
+    const preGreetingEn = 'Hey! Nice to meet you. This is my photo! What do you think about my look?';
+
     const initMessages: ChatMessage[] = [
       {
         id: 'sys-init',
@@ -58,7 +61,7 @@ export const StepChat: React.FC<StepChatProps> = ({
         id: 'ai-init',
         sender: 'ai',
         text: isPre 
-          ? (language === 'ko' ? `안녕! 만나서 반가워. 나는 이렇게 생긴 AI 친구야! 오늘 어떤 이야기 나누고 싶어?` : `Hey! Great to meet you. This is what I look like! What would you like to talk about today?`)
+          ? (language === 'ko' ? preGreetingKo : preGreetingEn)
           : t.aiGreeting,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         imageUrl: isPre ? stimulusImageUrl : undefined,
@@ -91,14 +94,14 @@ export const StepChat: React.FC<StepChatProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, []);
 
-  // Main 10-minute continuous timer & 3-minute stage transition
+  // Main 6-minute continuous timer & 2-minute stage transition (120s, 240s, 360s)
   useEffect(() => {
     const timer = setInterval(() => {
       setElapsedSeconds((prev) => {
         const next = prev + 1;
 
-        // Stage 2 transition at 3 minutes (180s)
-        if (next === 180 && stageRef.current === 1) {
+        // Stage 2 transition at 2 minutes (120s)
+        if (next === 120 && stageRef.current === 1) {
           stageRef.current = 2;
           setCurrentStage(2);
           setMessages((m) => [
@@ -112,8 +115,8 @@ export const StepChat: React.FC<StepChatProps> = ({
           ]);
         }
 
-        // Stage 3 transition at 6 minutes (360s)
-        if (next === 360 && stageRef.current === 2) {
+        // Stage 3 transition at 4 minutes (240s)
+        if (next === 240 && stageRef.current === 2) {
           stageRef.current = 3;
           setCurrentStage(3);
           setMessages((m) => [
