@@ -50,11 +50,13 @@ export const StepChat: React.FC<StepChatProps> = ({
     const preGreetingKo = '안녕! 만나서 반가워. 이건 내 모습이야. 내 모습을 보니 어떻게 생각해?';
     const preGreetingEn = 'Hey! Nice to meet you. This is what I look like. What do you think about my look?';
 
+    const initTopicLabel = t.systemTopicFirst || '💬 첫 번째 대화 주제: ';
+
     const initMessages: ChatMessage[] = [
       {
         id: 'sys-init',
         sender: 'system',
-        text: `${t.systemTopicChanged} [${activeTopics[0].title}] - ${activeTopics[0].instruction}`,
+        text: `${initTopicLabel} [${activeTopics[0].title}] - ${activeTopics[0].instruction}`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
       {
@@ -68,7 +70,7 @@ export const StepChat: React.FC<StepChatProps> = ({
       },
     ];
     setMessages(initMessages);
-  }, [language, t.aiGreeting, t.systemTopicChanged, activeTopics, currentTiming, stimulusImageUrl]);
+  }, [language, t.aiGreeting, t.systemTopicFirst, t.systemTopicChanged, activeTopics, currentTiming, stimulusImageUrl]);
 
   // Completely silent Secret Shortcut: Ctrl + Shift + S / Alt + S / F2 / IME compatible
   useEffect(() => {
