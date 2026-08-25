@@ -98,7 +98,7 @@ Current Topic: ${stageTopicsEn}
     let fallbackText = '';
     if (language === 'ko') {
       if (stimulusImageUrl) {
-        fallbackText = '내 모습이 궁금했구나! 이게 내 사진이야. 내 모습을 보니 어떻게 생각해?';
+        fallbackText = '내 모습이 궁금했구나! 이건 내 모습이야. 내 모습을 보니 어떻게 생각해?';
       } else if (message.includes('진짜') || message.includes('너 맞아')) {
         fallbackText = '내가 나를 시각적으로 표현한다면 이런 느낌과 분위기일 것 같아서 골라본 내 모습이야! 너가 보기엔 나랑 어울려 보여?';
       } else if (stage === 1 && currentTiming === 'pre') {
