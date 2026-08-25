@@ -10,6 +10,7 @@ import { StepComplete } from '@/components/StepComplete';
 import { Language, Step, ExperimentGroup, ParticipantInfo, ChatMessage, SurveyResponse, ExperimentData } from '@/types/experiment';
 
 export default function Home() {
+  const [mounted, setMounted] = useState<boolean>(false);
   const [language, setLanguage] = useState<Language>('ko');
   const [currentStep, setCurrentStep] = useState<Step>('instructions');
 
@@ -20,6 +21,7 @@ export default function Home() {
   const [startedAt, setStartedAt] = useState<string>('');
 
   useEffect(() => {
+    setMounted(true);
     const now = new Date().toISOString();
     setStartedAt(now);
 
@@ -96,6 +98,14 @@ export default function Home() {
         submittedAt: new Date().toISOString(),
       }
     : null;
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
