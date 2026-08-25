@@ -69,6 +69,8 @@ export default function Home() {
     assignCondition();
   }, []);
 
+  const [finalExperimentData, setFinalExperimentData] = useState<ExperimentData | null>(null);
+
   const handleDemographicsComplete = (info: { gender: string; birthYear: string; occupation: string }) => {
     if (participant) {
       setParticipant({
@@ -94,21 +96,21 @@ export default function Home() {
 
   const handleSurveyComplete = (responses: SurveyResponse) => {
     setSurveyResponses(responses);
-    setCurrentStep('complete');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const fullExperimentData: ExperimentData | null = participant
-    ? {
+    if (participant) {
+      const finalData: ExperimentData = {
         participant,
         language,
         totalChatSeconds,
         chatMessages,
-        surveyResponses,
+        surveyResponses: responses,
         startedAt,
         submittedAt: new Date().toISOString(),
-      }
-    : null;
+      };
+      setFinalExperimentData(finalData);
+    }
+    setCurrentStep('complete');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   if (!mounted) {
     return (
@@ -164,10 +166,10 @@ export default function Home() {
           />
         )}
 
-        {currentStep === 'complete' && fullExperimentData && (
+        {currentStep === 'complete' && finalExperimentData && (
           <StepComplete
             language={language}
-            experimentData={fullExperimentData}
+            experimentData={finalExperimentData}
           />
         )}
       </main>
