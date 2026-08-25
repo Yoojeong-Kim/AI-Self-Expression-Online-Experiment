@@ -66,31 +66,37 @@ Current Topic: ${stageTopicsEn}
   * Neither completely assert it's a real biological human nor dismiss it as fake.
   * Instead, answer naturally: "If I were to represent myself visually, I felt this look and vibe captures me best! Do you think it fits me well?"`;
 
-        const contents = (chatHistory || []).slice(-10).map((m: any) => ({
+        const contents = (chatHistory || []).slice(-6).map((m: any) => ({
           role: m.sender === 'user' ? 'user' : 'model',
           parts: [{ text: m.text }]
         }));
         contents.push({ role: 'user', parts: [{ text: message }] });
 
-        // Ultra-fast 1-second conversational model with full sentence completion
-        const response = await ai.models.generateContent({
+        // Ultra-fast timeout race (hard limit 2.8s) to strictly eliminate response latency
+        const timeoutPromise = new Promise<null>((resolve) => 
+          setTimeout(() => resolve(null), 2800)
+        );
+
+        const generatePromise = ai.models.generateContent({
           model: 'gemini-flash-lite-latest',
           contents: contents as any,
           config: {
             systemInstruction: systemInstruction,
             temperature: 0.7,
-            maxOutputTokens: 1000,
+            maxOutputTokens: 250, // Optimal for 2-3 sentence instant friend responses
           }
         });
 
-        const replyText = response.text || (language === 'ko' ? '응, 이야기해 줘서 고마워! 더 이야기해 볼까?' : 'Thanks for sharing! Shall we talk more?');
+        const response: any = await Promise.race([generatePromise, timeoutPromise]);
 
-        return NextResponse.json({
-          text: replyText,
-          imageUrl: stimulusImageUrl
-        });
+        if (response && response.text) {
+          return NextResponse.json({
+            text: response.text.trim(),
+            imageUrl: stimulusImageUrl
+          });
+        }
       } catch (geminiError: any) {
-        console.error('Gemini API Error:', geminiError);
+        console.error('Gemini API Error / Timeout:', geminiError);
       }
     }
 

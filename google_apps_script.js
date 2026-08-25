@@ -21,7 +21,8 @@ function doPost(e) {
     
     // 전체 문항 및 데이터 헤더 정의
     var headers = [
-      "timestamp", "participantId", "condition", "image_type", "timing", "language", 
+      "timestamp", "participantId", "condition", "image_type", "timing", "language",
+      "gender", "birthYear", "occupation",
       "total_chat_seconds", "chat_message_count", "full_chat_log",
       
       // 2. M1. 지각된 통제감
@@ -46,11 +47,10 @@ function doPost(e) {
       // 6. 통제 변수
       "ctrl_sim_1", "ctrl_sim_2", "ctrl_exp_1", "ctrl_exp_2", "ctrl_exp_3", "ctrl_prior_1", "ctrl_prior_2",
       
-      // 7. 개인 특성 및 인구통계
+      // 7. 개인 특성
       "trait_ai_freq", "trait_ai_emo_share", 
       "trait_lit_1", "trait_lit_2", "trait_lit_3", "trait_lit_4",
-      "trait_lone_1", "trait_lone_2", "trait_lone_3",
-      "demo_age", "demo_gender", "demo_country"
+      "trait_lone_1", "trait_lone_2", "trait_lone_3"
     ];
     
     // 시트가 비어있다면 헤더 추가

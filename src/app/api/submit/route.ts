@@ -32,13 +32,16 @@ export async function POST(req: NextRequest) {
       timing: p.timing || 'mid',
       group: p.group || p.imageType || 'A',
       language: experimentData.language,
+      gender: p.gender,
+      birthYear: p.birthYear,
+      occupation: p.occupation,
       gender_pre: p.gender,
       birthYear_pre: p.birthYear,
       occupation_pre: p.occupation,
       total_chat_seconds: experimentData.totalChatSeconds || 0,
       chat_message_count: msgs.length,
       full_chat_log: formattedChatLog,
-      // Dynamic survey responses from StepSurvey (M1, M2, DVs, Manipulation Checks, Control Vars, Traits, Demographics)
+      // Dynamic survey responses from StepSurvey (M1, M2, DVs, Manipulation Checks, Control Vars, Traits)
       ...experimentData.surveyResponses
     };
 
@@ -49,7 +52,8 @@ export async function POST(req: NextRequest) {
       try {
         const response = await fetch(googleAppsScriptUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          redirect: 'follow',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(sheetPayload),
         });
         if (response.ok) {
@@ -57,6 +61,7 @@ export async function POST(req: NextRequest) {
           sheetsMessage = 'Synced to Google Sheet';
         }
       } catch (fetchErr: any) {
+        console.warn('Sheets fetch error:', fetchErr);
         sheetsMessage = `Sheet sync error: ${fetchErr.message}`;
       }
     }

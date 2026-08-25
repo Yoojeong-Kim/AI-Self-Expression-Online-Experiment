@@ -406,30 +406,6 @@ export const surveySections: SurveySection[] = [
         type: 'likert7',
         ko: '7-3-3. 나는 다른 사람들과 단절되어 있다고 느낀다.',
         en: '7-3-3. I feel isolated from others.'
-      },
-      {
-        id: 'demo_age',
-        type: 'number',
-        ko: '7-4-1. 연령 (만 나이)',
-        en: '7-4-1. Age (in full years)'
-      },
-      {
-        id: 'demo_gender',
-        type: 'singleChoice',
-        ko: '7-4-2. 성별',
-        en: '7-4-2. Gender',
-        options: [
-          { value: 'female', ko: '① 여성', en: '① Female' },
-          { value: 'male', ko: '② 남성', en: '② Male' },
-          { value: 'other', ko: '③ 기타', en: '③ Other' },
-          { value: 'prefer_not_to_say', ko: '④ 응답하지 않음', en: '④ Prefer not to say' }
-        ]
-      },
-      {
-        id: 'demo_country',
-        type: 'text',
-        ko: '7-4-3. 현재 거주 국가',
-        en: '7-4-3. Current Country of Residence'
       }
     ]
   }
