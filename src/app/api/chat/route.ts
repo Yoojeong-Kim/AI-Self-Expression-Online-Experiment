@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
+import { getStimulusImageUrl } from '@/data/stimuli';
 
 const APPEARANCE_REGEX = /(어떻게\s*생겼|외모|얼굴|모습|사진|자극물|보여줘|생김새|show\s*(me)?\s*(what|your|how)|look\s*like|appearance|face|picture|photo|avatar)/i;
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { message, stage, group, imageType, timing, language, chatHistory, hasShownStimulus } = body;
+    const { message, stage, group, imageType, timing, gender, language, chatHistory, hasShownStimulus } = body;
 
     const currentImageType = imageType || group || 'A';
     const currentTiming = timing || 'mid';
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
     let stimulusImageUrl: string | undefined = undefined;
     // Show image only once in the entire conversation (for mid timing or direct appearance query)
     if (!alreadyShown && isAppearanceStageOrQuery) {
-      stimulusImageUrl = currentImageType === 'B' ? '/stimuli/condition_b.svg' : '/stimuli/condition_a.svg';
+      stimulusImageUrl = getStimulusImageUrl(gender, currentImageType);
     }
 
     const apiKey = process.env.GEMINI_API_KEY;

@@ -3,7 +3,7 @@ export type ImageType = 'A' | 'B';
 export type ExperimentGroup = ImageType;
 export type DisclosureTiming = 'pre' | 'mid';
 export type ExperimentCondition = 'A_pre' | 'A_mid' | 'B_pre' | 'B_mid';
-export type Step = 'instructions' | 'chat' | 'survey' | 'complete';
+export type Step = 'demographics' | 'instructions' | 'chat' | 'survey' | 'complete';
 
 export interface ParticipantInfo {
   id: string;

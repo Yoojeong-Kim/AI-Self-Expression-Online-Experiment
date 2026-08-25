@@ -12,7 +12,7 @@ import { Language, Step, ExperimentGroup, ParticipantInfo, ChatMessage, SurveyRe
 export default function Home() {
   const [mounted, setMounted] = useState<boolean>(false);
   const [language, setLanguage] = useState<Language>('ko');
-  const [currentStep, setCurrentStep] = useState<Step>('instructions');
+  const [currentStep, setCurrentStep] = useState<Step>('demographics');
 
   const [participant, setParticipant] = useState<ParticipantInfo | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -69,6 +69,17 @@ export default function Home() {
     assignCondition();
   }, []);
 
+  const handleDemographicsComplete = (info: { gender: string; birthYear: string; occupation: string }) => {
+    if (participant) {
+      setParticipant({
+        ...participant,
+        ...info,
+      });
+    }
+    setCurrentStep('instructions');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleInstructionsStart = () => {
     setCurrentStep('chat');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -119,6 +130,13 @@ export default function Home() {
       />
 
       <main className="flex-1">
+        {currentStep === 'demographics' && (
+          <StepDemographics
+            language={language}
+            onComplete={handleDemographicsComplete}
+          />
+        )}
+
         {currentStep === 'instructions' && (
           <StepInstructions
             language={language}
@@ -129,6 +147,7 @@ export default function Home() {
         {currentStep === 'chat' && participant && (
           <StepChat
             language={language}
+            gender={participant.gender}
             group={participant.imageType}
             imageType={participant.imageType}
             timing={participant.timing}
@@ -139,6 +158,7 @@ export default function Home() {
         {currentStep === 'survey' && (
           <StepSurvey
             language={language}
+            gender={participant?.gender}
             group={participant?.imageType || 'A'}
             onSubmitSurvey={handleSurveyComplete}
           />

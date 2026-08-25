@@ -3,10 +3,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Language, ExperimentGroup, ImageType, DisclosureTiming, ChatMessage } from '@/types/experiment';
 import { translations } from '@/data/locales';
-import { Clock, Send, Bot, User as UserIcon, ArrowRight, CheckCircle2, Zap } from 'lucide-react';
+import { getStimulusImageUrl } from '@/data/stimuli';
+import { Clock, Send, Bot, User as UserIcon, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 interface StepChatProps {
   language: Language;
+  gender?: string;
   group?: ExperimentGroup;
   imageType?: ImageType;
   timing?: DisclosureTiming;
@@ -17,6 +19,7 @@ const TOTAL_REQUIRED_SECONDS = 600; // 10 minutes (600s)
 
 export const StepChat: React.FC<StepChatProps> = ({
   language,
+  gender,
   group = 'A',
   imageType = 'A',
   timing = 'mid',
@@ -27,7 +30,7 @@ export const StepChat: React.FC<StepChatProps> = ({
   const currentTiming = timing || 'mid';
   const activeTopics = currentTiming === 'pre' ? (t.topicsPre || t.topics) : (t.topicsMid || t.topics);
 
-  const stimulusImageUrl = currentImageType === 'B' ? '/stimuli/condition_b.svg' : '/stimuli/condition_a.svg';
+  const stimulusImageUrl = getStimulusImageUrl(gender, currentImageType);
 
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -171,6 +174,7 @@ export const StepChat: React.FC<StepChatProps> = ({
         body: JSON.stringify({
           message: trimmed,
           stage: currentStage,
+          gender: gender,
           group: currentImageType,
           imageType: currentImageType,
           timing: currentTiming,

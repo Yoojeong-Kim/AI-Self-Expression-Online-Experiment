@@ -4,10 +4,11 @@ export const translations = {
   ko: {
     appTitle: 'AI 상호작용 연구',
     header: {
-      step1: '안내',
-      step2: 'AI 대화',
-      step3: '설문',
-      step4: '완료',
+      step1: '기본정보',
+      step2: '안내',
+      step3: 'AI 대화',
+      step4: '설문',
+      step5: '완료',
       participantId: '참가자',
       group: '그룹',
     },
@@ -149,10 +150,11 @@ export const translations = {
   en: {
     appTitle: 'AI Interaction Research',
     header: {
-      step1: 'Guide',
-      step2: 'AI Chat',
-      step3: 'Survey',
-      step4: 'Done',
+      step1: 'Profile',
+      step2: 'Guide',
+      step3: 'AI Chat',
+      step4: 'Survey',
+      step5: 'Done',
       participantId: 'Participant',
       group: 'Group',
     },

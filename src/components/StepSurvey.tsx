@@ -4,18 +4,21 @@ import React, { useState } from 'react';
 import { Language, ExperimentGroup, SurveyResponse } from '@/types/experiment';
 import { translations } from '@/data/locales';
 import { surveySections, allSurveyQuestions, SurveyQuestionItem } from '@/data/surveyQuestions';
+import { getStimulusImageUrl } from '@/data/stimuli';
 import { IOSScale } from '@/components/IOSScale';
 import { ArrowRight, AlertCircle, Sparkles, CheckCircle2, Image as ImageIcon } from 'lucide-react';
 
 interface StepSurveyProps {
   language: Language;
   group: ExperimentGroup;
+  gender?: string;
   onSubmitSurvey: (responses: SurveyResponse) => void;
 }
 
 export const StepSurvey: React.FC<StepSurveyProps> = ({
   language,
   group,
+  gender,
   onSubmitSurvey,
 }) => {
   const t = translations[language].survey;
@@ -29,7 +32,7 @@ export const StepSurvey: React.FC<StepSurveyProps> = ({
   }).length;
   const progressPercent = Math.round((answeredCount / totalQuestions) * 100);
 
-  const stimulusSrc = group === 'B' ? '/stimuli/condition_b.svg' : '/stimuli/condition_a.svg';
+  const stimulusSrc = getStimulusImageUrl(gender, group);
 
   const handleSelectValue = (questionId: string, value: number | string) => {
     setResponses((prev) => ({
