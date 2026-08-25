@@ -1,68 +1,145 @@
-import Image from "next/image";
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { Header } from '@/components/Header';
+import { StepDemographics } from '@/components/StepDemographics';
+import { StepInstructions } from '@/components/StepInstructions';
+import { StepChat } from '@/components/StepChat';
+import { StepSurvey } from '@/components/StepSurvey';
+import { StepComplete } from '@/components/StepComplete';
+import { Language, Step, ExperimentGroup, ParticipantInfo, ChatMessage, SurveyResponse, ExperimentData } from '@/types/experiment';
 
 export default function Home() {
+  const [language, setLanguage] = useState<Language>('ko');
+  const [currentStep, setCurrentStep] = useState<Step>('instructions');
+
+  const [participant, setParticipant] = useState<ParticipantInfo | null>(null);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [totalChatSeconds, setTotalChatSeconds] = useState<number>(0);
+  const [surveyResponses, setSurveyResponses] = useState<SurveyResponse>({});
+  const [startedAt, setStartedAt] = useState<string>('');
+
+  useEffect(() => {
+    const now = new Date().toISOString();
+    setStartedAt(now);
+
+    const assignCondition = async () => {
+      try {
+        const res = await fetch('/api/assign');
+        if (res.ok) {
+          const data = await res.json();
+          setParticipant({
+            id: data.participantId,
+            imageType: data.imageType,
+            timing: data.timing,
+            condition: data.condition,
+            group: data.imageType,
+            gender: '',
+            birthYear: '',
+            occupation: '',
+            consentedAt: now,
+          });
+          return;
+        }
+      } catch (e) {
+        console.warn('Assign API error, using fallback assignment:', e);
+      }
+
+      // Fallback in-client randomizer
+      const randomId = 'P' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      const imageType = Math.random() < 0.5 ? 'A' : 'B';
+      const timing = Math.random() < 0.5 ? 'pre' : 'mid';
+      const condition = `${imageType}_${timing}` as any;
+
+      setParticipant({
+        id: randomId,
+        imageType,
+        timing,
+        condition,
+        group: imageType,
+        gender: '',
+        birthYear: '',
+        occupation: '',
+        consentedAt: now,
+      });
+    };
+
+    assignCondition();
+  }, []);
+
+  const handleInstructionsStart = () => {
+    setCurrentStep('chat');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleFinishChat = (seconds: number, messages: ChatMessage[]) => {
+    setTotalChatSeconds(seconds);
+    setChatMessages(messages);
+    setCurrentStep('survey');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSurveyComplete = (responses: SurveyResponse) => {
+    setSurveyResponses(responses);
+    setCurrentStep('complete');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const fullExperimentData: ExperimentData | null = participant
+    ? {
+        participant,
+        language,
+        totalChatSeconds,
+        chatMessages,
+        surveyResponses,
+        startedAt,
+        submittedAt: new Date().toISOString(),
+      }
+    : null;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
+      <Header
+        language={language}
+        onLanguageChange={setLanguage}
+        currentStep={currentStep}
+        participantId={participant?.id}
+        group={participant?.group}
+        condition={participant?.condition}
+      />
+
+      <main className="flex-1">
+        {currentStep === 'instructions' && (
+          <StepInstructions
+            language={language}
+            onStart={handleInstructionsStart}
+          />
+        )}
+
+        {currentStep === 'chat' && participant && (
+          <StepChat
+            language={language}
+            group={participant.imageType}
+            imageType={participant.imageType}
+            timing={participant.timing}
+            onFinishChat={handleFinishChat}
+          />
+        )}
+
+        {currentStep === 'survey' && (
+          <StepSurvey
+            language={language}
+            group={participant?.imageType || 'A'}
+            onSubmitSurvey={handleSurveyComplete}
+          />
+        )}
+
+        {currentStep === 'complete' && fullExperimentData && (
+          <StepComplete
+            language={language}
+            experimentData={fullExperimentData}
+          />
+        )}
       </main>
     </div>
   );

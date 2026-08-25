@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgA" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F46E5" />
+      <stop offset="100%" stop-color="#06B6D4" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" rx="30" fill="url(#bgA)" />
+  <circle cx="200" cy="150" r="65" fill="#FFFFFF" opacity="0.9" />
+  <!-- Friendly Avatar A Character -->
+  <circle cx="180" cy="145" r="8" fill="#1E293B" />
+  <circle cx="220" cy="145" r="8" fill="#1E293B" />
+  <path d="M 175 170 Q 200 195 225 170" stroke="#1E293B" stroke-width="6" stroke-linecap="round" fill="none" />
+  <path d="M 120 280 C 120 220, 280 220, 280 280 Z" fill="#FFFFFF" opacity="0.9" />
+  <rect x="80" y="310" width="240" height="45" rx="12" fill="#FFFFFF" />
+  <text x="200" y="340" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#4F46E5" text-anchor="middle">AI Persona Type A (Stylized)</text>
+</svg>

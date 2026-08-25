@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgB" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EA580C" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" rx="30" fill="url(#bgB)" />
+  <circle cx="200" cy="150" r="65" fill="#FFFFFF" opacity="0.9" />
+  <!-- Realistic / Professional Avatar B Character -->
+  <circle cx="178" cy="145" r="7" fill="#1E293B" />
+  <circle cx="222" cy="145" r="7" fill="#1E293B" />
+  <!-- Glasses -->
+  <rect x="165" y="135" width="26" height="20" rx="4" fill="none" stroke="#1E293B" stroke-width="3" />
+  <rect x="209" y="135" width="26" height="20" rx="4" fill="none" stroke="#1E293B" stroke-width="3" />
+  <line x1="191" y1="145" x2="209" y2="145" stroke="#1E293B" stroke-width="3" />
+  <path d="M 185 175 Q 200 188 215 175" stroke="#1E293B" stroke-width="4" stroke-linecap="round" fill="none" />
+  <path d="M 120 280 C 120 220, 280 220, 280 280 Z" fill="#FFFFFF" opacity="0.9" />
+  <rect x="80" y="310" width="240" height="45" rx="12" fill="#FFFFFF" />
+  <text x="200" y="340" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#EA580C" text-anchor="middle">AI Persona Type B (Realistic)</text>
+</svg>
