@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
+const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycby32gtkSc7K0Q-N3gKtw8IwxaK0duzV08M9kbDWhZp9bEyDkVL3Cwx5JVHS-4LC1oqp/exec';
+
 export async function POST(req: NextRequest) {
   try {
     const experimentData = await req.json();
-    const googleAppsScriptUrl = process.env.GOOGLE_SHEETS_WEBAPP_URL;
+    const googleAppsScriptUrl = process.env.GOOGLE_SHEETS_WEBAPP_URL || DEFAULT_SHEETS_URL;
 
     // 1. Local JSON backup
     try {
