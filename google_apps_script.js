@@ -1,15 +1,12 @@
 /**
- * Google Apps Script for Online Experiment Data Collection
- * AI 챗봇의 시각적 자기표현 연구 (Study on Visual Self-Presentation of AI Chatbots)
- * 
- * [설정 방법]
- * 1. 구글 스프레드시트 상단 메뉴 [확장 프로그램] -> [Apps Script] 클릭
- * 2. 기존 코드를 모두 지우고 이 파일의 내용을 붙여넣기
- * 3. 우측 상단 [배포] -> [새 배포 관리] 또는 [새 배포] -> [웹 앱]
- *    - 다음 사용자로 실행: '나(내 계정)'
- *    - 액세스 권한: '모든 사용자(Anyone)'
- * 4. [배포] 후 생성된 웹 앱 URL을 복사하여 .env.local의 GOOGLE_SHEETS_WEBAPP_URL에 넣으시면 됩니다.
+ * Google Apps Script Web App (v3.0 - Case-Insensitive Smart Sync)
  */
+
+function doGet(e) {
+  return ContentService
+    .createTextOutput("✅ AI Experiment Webhook v3.0 is Active and Working Properly!")
+    .setMimeType(ContentService.MimeType.TEXT);
+}
 
 function doPost(e) {
   var lock = LockService.getScriptLock();
@@ -18,54 +15,40 @@ function doPost(e) {
   try {
     var doc = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = doc.getActiveSheet();
+    var rawContents = e.postData ? e.postData.contents : "{}";
+    var data = JSON.parse(rawContents);
     
-    // 전체 문항 및 데이터 헤더 정의
-    var headers = [
-      "timestamp", "participantId", "condition", "image_type", "timing", "language",
-      "gender", "birthYear", "occupation",
-      "total_chat_seconds", "chat_message_count", "full_chat_log",
-      
-      // 2. M1. 지각된 통제감
-      "m1_control_1", "m1_control_2", "m1_control_3", "m1_control_4",
-      
-      // 3. M2. 자기투영 (3-1 자기일치 & 3-2 IOS 척도)
-      "m2_self_1", "m2_self_2", "m2_self_3", "m2_ios_scale",
-      
-      // 4. DVs
-      // 4-1 조언 이행 의도
-      "dv_advice_1", "dv_advice_2", "dv_advice_3",
-      // 4-2 정서적 의존
-      "dv_emo_1", "dv_emo_2", "dv_emo_3", "dv_emo_4",
-      // 4-3 준사회적 상호작용 경험
-      "dv_psi_1", "dv_psi_2", "dv_psi_3", "dv_psi_4", "dv_psi_5", "dv_psi_6",
-      // 4-4 인지적 의존
-      "dv_cog_1", "dv_cog_2", "dv_cog_3", "dv_cog_4", "dv_cog_5", "dv_cog_6",
-      
-      // 5. 조작 점검
-      "mc_timing", "mc_staged_1", "mc_staged_2", "mc_staged_3", "mc_attention",
-      
-      // 6. 통제 변수
-      "ctrl_sim_1", "ctrl_sim_2", "ctrl_exp_1", "ctrl_exp_2", "ctrl_exp_3", "ctrl_prior_1", "ctrl_prior_2",
-      
-      // 7. 개인 특성
-      "trait_ai_freq", "trait_ai_emo_share", 
-      "trait_lit_1", "trait_lit_2", "trait_lit_3", "trait_lit_4",
-      "trait_lone_1", "trait_lone_2", "trait_lone_3"
-    ];
-    
-    // 시트가 비어있다면 헤더 추가
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(headers);
+    // 키 이름을 소문자 및 밑줄 제거한 사전(Lookup Map)으로 생성
+    var dataMap = {};
+    for (var k in data) {
+      if (data.hasOwnProperty(k)) {
+        var cleanKey = k.toLowerCase().replace(/[^a-z0-9]/g, "");
+        dataMap[cleanKey] = data[k];
+      }
     }
     
-    var data = JSON.parse(e.postData.contents);
-    
-    // 헤더 순서대로 행 데이터 매핑
-    var row = [];
-    for (var i = 0; i < headers.length; i++) {
-      var key = headers[i];
-      row.push(data[key] !== undefined ? data[key] : "");
+    // 1. 만약 시트가 비어있다면 1행 자동 생성
+    if (sheet.getLastRow() === 0 || sheet.getLastColumn() === 0) {
+      sheet.appendRow(Object.keys(data));
     }
+    
+    // 2. 스프레드시트 1행에 적힌 열 이름들을 읽어옴
+    var lastCol = sheet.getLastColumn();
+    var sheetHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    
+    // 3. 열 이름과 일치하는 데이터 값을 대소문자 무관하게 1:1 매핑
+    var row = sheetHeaders.map(function(headerName) {
+      var rawName = String(headerName).trim();
+      var cleanHeader = rawName.toLowerCase().replace(/[^a-z0-9]/g, "");
+      
+      if (data[rawName] !== undefined && data[rawName] !== null) {
+        return data[rawName];
+      }
+      if (dataMap[cleanHeader] !== undefined && dataMap[cleanHeader] !== null) {
+        return dataMap[cleanHeader];
+      }
+      return "";
+    });
     
     sheet.appendRow(row);
     
