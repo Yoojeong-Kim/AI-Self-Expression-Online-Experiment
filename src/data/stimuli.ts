@@ -6,11 +6,11 @@ export function getStimulusImageUrl(gender?: string, imageType: ImageType = 'A')
   const isMale = g === 'male' || g === '남성' || g.startsWith('남');
 
   if (isFemale) {
-    return imageType === 'B' ? '/stimuli/female_b.svg' : '/stimuli/female_a.svg';
+    return imageType === 'B' ? '/stimuli/female_b.png' : '/stimuli/female_a.png';
   } else if (isMale) {
-    return imageType === 'B' ? '/stimuli/male_b.svg' : '/stimuli/male_a.svg';
+    return imageType === 'B' ? '/stimuli/male_b.png' : '/stimuli/male_a.png';
   }
 
   // Fallback default
-  return imageType === 'B' ? '/stimuli/condition_b.svg' : '/stimuli/condition_a.svg';
+  return imageType === 'B' ? '/stimuli/female_b.png' : '/stimuli/female_a.png';
 }

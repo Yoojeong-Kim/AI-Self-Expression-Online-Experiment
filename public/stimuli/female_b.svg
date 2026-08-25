@@ -1,6 +1,0 @@
-<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="400" height="400" rx="24" fill="#F5F3FF"/>
-  <circle cx="200" cy="150" r="70" fill="#8B5CF6"/>
-  <path d="M90 340C90 270 140 240 200 240C260 240 310 270 310 340" fill="#8B5CF6"/>
-  <text x="200" y="375" font-family="sans-serif" font-size="20" font-weight="bold" fill="#8B5CF6" text-anchor="middle">Female - Condition B</text>
-</svg>
