@@ -345,13 +345,20 @@ export const StepSurvey: React.FC<StepSurveyProps> = ({
         <div className="sticky bottom-4 z-40 pt-4">
           <button
             type="submit"
+            disabled={!isComplete}
             className={`w-full py-4 px-6 rounded-2xl font-bold text-sm sm:text-base transition-all flex items-center justify-center gap-2 group ${
               isComplete
-                ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl hover:shadow-2xl cursor-pointer'
-                : 'bg-slate-200 text-slate-400 border border-slate-300/60 shadow-none cursor-not-allowed hover:bg-slate-200'
+                ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl hover:shadow-2xl cursor-pointer ring-2 ring-indigo-600/30 ring-offset-2'
+                : 'bg-slate-200 text-slate-400 border border-slate-300 shadow-none cursor-not-allowed pointer-events-none'
             }`}
           >
-            <span>{t.submitButton}</span>
+            <span>
+              {isComplete
+                ? t.submitButton
+                : language === 'ko'
+                ? `모든 문항에 응답해 주세요 (${answeredCount}/${totalQuestions})`
+                : `Please answer all questions (${answeredCount}/${totalQuestions})`}
+            </span>
             <ArrowRight className={`w-5 h-5 transition-transform ${isComplete ? 'group-hover:translate-x-1 text-white' : 'text-slate-400'}`} />
           </button>
         </div>
