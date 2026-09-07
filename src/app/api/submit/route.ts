@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
-const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycby32gtkSc7K0Q-N3gKtw8IwxaK0duzV08M9kbDWhZp9bEyDkVL3Cwx5JVHS-4LC1oqp/exec';
+const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbz64BolqUeBAB08rbKe9SG4ZpqEHy9uksru3UKr-XzV0-ZD2Y6MgLKIj6w0bE3HWuM/exec';
 
 export async function POST(req: NextRequest) {
   try {
