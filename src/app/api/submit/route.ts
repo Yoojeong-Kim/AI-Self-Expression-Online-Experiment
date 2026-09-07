@@ -23,7 +23,10 @@ export async function POST(req: NextRequest) {
     const p = experimentData.participant;
     const msgs = experimentData.chatMessages || [];
     const formattedChatLog = msgs
-      .map((m: any) => `[${m.timestamp}] ${m.sender.toUpperCase()}: ${m.text}${m.imageUrl ? ' (STIMULUS_IMAGE_DISPLAYED)' : ''}`)
+      .map((m: any) => {
+        const role = m.sender === 'user' ? '참가자(USER)' : m.sender === 'ai' ? '챗봇(AI)' : '시스템(안내)';
+        return `[${m.timestamp}] ${role}: ${m.text}${m.imageUrl ? ' (사진_노출됨)' : ''}`;
+      })
       .join('\n');
 
     const sheetPayload = {
