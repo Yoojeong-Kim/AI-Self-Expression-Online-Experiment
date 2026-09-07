@@ -34,6 +34,30 @@ export const StepSurvey: React.FC<StepSurveyProps> = ({
 
   const stimulusSrc = getStimulusImageUrl(gender, group);
 
+  // Secret shortcut (Ctrl+Shift+S / Alt+S / F2) to autofill survey for testing
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isS = e.code === 'KeyS' || e.key === 's' || e.key === 'S' || e.key === 'ㄴ';
+      if (((e.ctrlKey || e.metaKey) && e.shiftKey && isS) || (e.altKey && isS) || e.key === 'F2') {
+        e.preventDefault();
+        e.stopPropagation();
+        const autoFilled: SurveyResponse = {};
+        allSurveyQuestions.forEach((q) => {
+          if (q.type === 'likert7') autoFilled[q.id] = 6;
+          else if (q.type === 'ios') autoFilled[q.id] = 5;
+          else if (q.type === 'singleChoice' && q.options) autoFilled[q.id] = q.options[0].value;
+          else if (q.type === 'number') autoFilled[q.id] = 25;
+          else autoFilled[q.id] = 'Auto-filled for testing';
+        });
+        setResponses(autoFilled);
+        if (errorMessage) setErrorMessage('');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [errorMessage]);
+
   const handleSelectValue = (questionId: string, value: number | string) => {
     setResponses((prev) => ({
       ...prev,

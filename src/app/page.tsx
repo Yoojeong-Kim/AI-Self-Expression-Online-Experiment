@@ -20,17 +20,23 @@ export default function Home() {
   const [surveyResponses, setSurveyResponses] = useState<SurveyResponse>({});
   const [startedAt, setStartedAt] = useState<string>('');
 
+  const participantRef = React.useRef<ParticipantInfo | null>(null);
+  const chatMessagesRef = React.useRef<ChatMessage[]>([]);
+  const totalChatSecondsRef = React.useRef<number>(0);
+  const startedAtRef = React.useRef<string>('');
+
   useEffect(() => {
     setMounted(true);
     const now = new Date().toISOString();
     setStartedAt(now);
+    startedAtRef.current = now;
 
     const assignCondition = async () => {
       try {
         const res = await fetch('/api/assign');
         if (res.ok) {
           const data = await res.json();
-          setParticipant({
+          const pInfo: ParticipantInfo = {
             id: data.participantId,
             imageType: data.imageType,
             timing: data.timing,
@@ -40,7 +46,9 @@ export default function Home() {
             birthYear: '',
             occupation: '',
             consentedAt: now,
-          });
+          };
+          setParticipant(pInfo);
+          participantRef.current = pInfo;
           return;
         }
       } catch (e) {
@@ -53,7 +61,7 @@ export default function Home() {
       const timing = Math.random() < 0.5 ? 'pre' : 'mid';
       const condition = `${imageType}_${timing}` as any;
 
-      setParticipant({
+      const pInfo: ParticipantInfo = {
         id: randomId,
         imageType,
         timing,
@@ -63,7 +71,9 @@ export default function Home() {
         birthYear: '',
         occupation: '',
         consentedAt: now,
-      });
+      };
+      setParticipant(pInfo);
+      participantRef.current = pInfo;
     };
 
     assignCondition();
@@ -72,11 +82,14 @@ export default function Home() {
   const [finalExperimentData, setFinalExperimentData] = useState<ExperimentData | null>(null);
 
   const handleDemographicsComplete = (info: { gender: string; birthYear: string; occupation: string }) => {
-    if (participant) {
-      setParticipant({
-        ...participant,
-        ...info,
-      });
+    const updated = participantRef.current ? { ...participantRef.current, ...info } : null;
+    if (updated) {
+      setParticipant(updated);
+      participantRef.current = updated;
+    } else if (participant) {
+      const p = { ...participant, ...info };
+      setParticipant(p);
+      participantRef.current = p;
     }
     setCurrentStep('instructions');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -90,23 +103,40 @@ export default function Home() {
   const handleFinishChat = (seconds: number, messages: ChatMessage[]) => {
     setTotalChatSeconds(seconds);
     setChatMessages(messages);
+    totalChatSecondsRef.current = seconds;
+    chatMessagesRef.current = messages;
     setCurrentStep('survey');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSurveyComplete = (responses: SurveyResponse) => {
+  const handleSurveyComplete = async (responses: SurveyResponse) => {
     setSurveyResponses(responses);
-    if (participant) {
+    const curParticipant = participantRef.current || participant;
+    const curSeconds = totalChatSecondsRef.current || totalChatSeconds;
+    const curMessages = chatMessagesRef.current.length > 0 ? chatMessagesRef.current : chatMessages;
+
+    if (curParticipant) {
       const finalData: ExperimentData = {
-        participant,
+        participant: curParticipant,
         language,
-        totalChatSeconds,
-        chatMessages,
+        totalChatSeconds: curSeconds,
+        chatMessages: curMessages,
         surveyResponses: responses,
-        startedAt,
+        startedAt: startedAtRef.current || startedAt,
         submittedAt: new Date().toISOString(),
       };
       setFinalExperimentData(finalData);
+
+      // Direct submit API call to eliminate any lifecycle race condition
+      try {
+        await fetch('/api/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(finalData),
+        });
+      } catch (err) {
+        console.error('Submit API direct call error:', err);
+      }
     }
     setCurrentStep('complete');
     window.scrollTo({ top: 0, behavior: 'smooth' });
