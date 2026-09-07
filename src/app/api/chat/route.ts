@@ -80,11 +80,11 @@ Current Topic: ${stageTopicsEn}
   * Neither completely assert it's a real biological human nor dismiss it as fake.
   * Instead, answer naturally: "If I were to represent myself visually, I felt this look and vibe captures me best! Do you think it fits me well?"`;
 
-        const contents = (chatHistory || []).slice(-6).map((m: any) => ({
+        // chatHistory already contains the latest user message, so we don't need to push it again.
+        const contents = (chatHistory || []).slice(-7).map((m: any) => ({
           role: m.sender === 'user' ? 'user' : 'model',
           parts: [{ text: m.text }]
         }));
-        contents.push({ role: 'user', parts: [{ text: message }] });
 
         // Ultra-fast timeout race (hard limit 2.8s) to strictly eliminate response latency
         const timeoutPromise = new Promise<null>((resolve) => 
