@@ -62,11 +62,11 @@ export const StepSurvey: React.FC<StepSurveyProps> = ({
         <div className="flex flex-col md:flex-row items-center gap-6 pb-6 border-b border-slate-100">
           {/* Chatbot Image Display (Top Sticky / Anchored) */}
           <div className="flex-shrink-0 flex flex-col items-center">
-            <div className="w-48 h-48 sm:w-56 sm:h-56 rounded-2xl overflow-hidden border-2 border-indigo-200 bg-slate-50 shadow-md flex items-center justify-center p-2">
+            <div className="w-48 h-48 sm:w-56 sm:h-56 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-sm flex items-center justify-center">
               <img
                 src={stimulusSrc}
                 alt="Chatbot Presented Image"
-                className="w-full h-full object-contain"
+                className="w-full h-full object-cover block"
               />
             </div>
             <span className="text-[11px] font-semibold text-slate-500 mt-2 flex items-center gap-1">

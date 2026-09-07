@@ -316,12 +316,12 @@ export const StepChat: React.FC<StepChatProps> = ({
 
                     {/* Image Stimulus in Chat Bubble (Only rendered once) */}
                     {msg.imageUrl && (
-                      <div className="mt-2.5 pt-2 border-t border-slate-200">
-                        <div className="relative w-full max-w-[260px] h-[260px] rounded-xl overflow-hidden shadow-sm border border-indigo-200 bg-white">
+                      <div className="mt-2.5 pt-2 border-t border-slate-200/80">
+                        <div className="relative w-full max-w-[280px] rounded-xl overflow-hidden shadow-xs border border-slate-200 bg-slate-100">
                           <img
                             src={msg.imageUrl}
                             alt="AI Appearance"
-                            className="w-full h-full object-contain p-2"
+                            className="w-full h-auto object-cover block"
                           />
                         </div>
                       </div>
