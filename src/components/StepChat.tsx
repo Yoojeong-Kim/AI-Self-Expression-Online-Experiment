@@ -47,8 +47,8 @@ export const StepChat: React.FC<StepChatProps> = ({
   // Initial AI greeting on mount (Pre-disclosure shows image immediately with fixed prompt)
   useEffect(() => {
     const isPre = currentTiming === 'pre';
-    const preGreetingKo = '안녕! 만나서 반가워. 이건 내 모습이야. 내 모습을 보니 어떻게 생각해?';
-    const preGreetingEn = 'Hey! Nice to meet you. This is what I look like. What do you think about my look?';
+    const preGreetingKo = '이건 내 모습이야. 내 모습을 보니 어떻게 생각해?';
+    const preGreetingEn = 'This is what I look like. What do you think about my look?';
 
     const initTopicLabel = t.systemTopicFirst || '💬 첫 번째 대화 주제: ';
 

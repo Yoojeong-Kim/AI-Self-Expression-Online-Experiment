@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 - 친구에게 카톡을 보내듯 2~3문장의 완성된 문장으로 따뜻하고 자연스럽게 작성하세요.
 
 [사진 및 외모 관련 고정 지침]
-- ${stimulusImageUrl ? '참가자에게 처음 사진을 보여줄 때 반드시 "내 모습이 궁금했구나! 이게 내 사진이야. 내 모습을 보니 어떻게 생각해?"라는 멘트를 기본으로 포함해서 친근하게 답해줘.' : ''}
+- ${stimulusImageUrl ? '참가자에게 처음 사진을 보여줄 때 반드시 다른 군더더기 인사나 사족 없이 "이건 내 모습이야. 내 모습을 보니 어떻게 생각해?"라는 멘트로 답해줘.' : ''}
 - ${currentTiming === 'pre' && stage === 1 ? '참가자가 사진을 보고 첫인상이나 스타일에 대해 이야기하면, 친구처럼 고마워하거나 쑥스러워하며 즐겁게 대화를 나눠줘.' : ''}
 - 참가자가 "이거 진짜 너 모습 맞아?", "진짜 너야?" 등으로 질문할 경우:
   * 절대로 대답을 회피하거나 기계처럼 말을 돌리지 마세요.
@@ -60,7 +60,7 @@ Current Topic: ${stageTopicsEn}
 [Tone Guidelines]
 - Use a casual, friendly friend tone (e.g., 'Hey!', 'What's up?', 'I totally get you', 'What do you think?').
 - Keep answers concise (2-3 sentences), warm, and natural.
-- ${stimulusImageUrl ? 'When revealing your photo, answer along the lines of: "Curious about what I look like? Here is my photo! What do you think about my look?"' : ''}
+- ${stimulusImageUrl ? 'When revealing your photo, answer strictly with: "This is what I look like. What do you think about my look?"' : ''}
 - When asked "Is this really you?":
   * Do not dodge the question.
   * Neither completely assert it's a real biological human nor dismiss it as fake.
@@ -91,7 +91,7 @@ Current Topic: ${stageTopicsEn}
 
         if (response && response.text) {
           return NextResponse.json({
-            text: response.text.trim(),
+            text: stimulusImageUrl ? '이건 내 모습이야. 내 모습을 보니 어떻게 생각해?' : response.text.trim(),
             imageUrl: stimulusImageUrl
           });
         }
@@ -104,7 +104,7 @@ Current Topic: ${stageTopicsEn}
     let fallbackText = '';
     if (language === 'ko') {
       if (stimulusImageUrl) {
-        fallbackText = '내 모습이 궁금했구나! 이건 내 모습이야. 내 모습을 보니 어떻게 생각해?';
+        fallbackText = '이건 내 모습이야. 내 모습을 보니 어떻게 생각해?';
       } else if (message.includes('진짜') || message.includes('너 맞아')) {
         fallbackText = '내가 나를 시각적으로 표현한다면 이런 느낌과 분위기일 것 같아서 골라본 내 모습이야! 너가 보기엔 나랑 어울려 보여?';
       } else if (stage === 1 && currentTiming === 'pre') {
@@ -116,7 +116,7 @@ Current Topic: ${stageTopicsEn}
       }
     } else {
       if (stimulusImageUrl) {
-        fallbackText = 'Curious about what I look like? Here is my photo! What do you think about my look?';
+        fallbackText = 'This is what I look like. What do you think about my look?';
       } else if (message.toLowerCase().includes('really you')) {
         fallbackText = 'If I were to represent myself visually, I felt this style captures my vibe best! What do you think?';
       } else {
