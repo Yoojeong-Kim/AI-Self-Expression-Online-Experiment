@@ -32,22 +32,24 @@ export const StepSurvey: React.FC<StepSurveyProps> = ({
   }).length;
   const progressPercent = Math.round((answeredCount / totalQuestions) * 100);
 
+  const isComplete = answeredCount >= totalQuestions;
   const stimulusSrc = getStimulusImageUrl(gender, group);
 
-  // Secret shortcut (Ctrl+Shift+S / Alt+S / F2) to autofill survey for testing
+  // Secret shortcut: Alt + S (or Ctrl+Shift+S / F2) to autofill all survey questions for testing
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const isS = e.code === 'KeyS' || e.key === 's' || e.key === 'S' || e.key === 'ㄴ';
-      if (((e.ctrlKey || e.metaKey) && e.shiftKey && isS) || (e.altKey && isS) || e.key === 'F2') {
+      const isS = e.code === 'KeyS' || e.key === 's' || e.key === 'S' || e.key === 'ㄴ' || e.keyCode === 83;
+      if ((e.altKey && isS) || ((e.ctrlKey || e.metaKey) && e.shiftKey && isS) || e.key === 'F2') {
         e.preventDefault();
         e.stopPropagation();
         const autoFilled: SurveyResponse = {};
         allSurveyQuestions.forEach((q) => {
           if (q.type === 'likert7') autoFilled[q.id] = 6;
           else if (q.type === 'ios') autoFilled[q.id] = 5;
-          else if (q.type === 'singleChoice' && q.options) autoFilled[q.id] = q.options[0].value;
+          else if (q.type === 'singleChoice' && q.options && q.options.length > 0) autoFilled[q.id] = q.options[0].value;
+          else if (q.type === 'yesNo') autoFilled[q.id] = 'yes';
           else if (q.type === 'number') autoFilled[q.id] = 25;
-          else autoFilled[q.id] = 'Auto-filled for testing';
+          else autoFilled[q.id] = 'Testing response';
         });
         setResponses(autoFilled);
         if (errorMessage) setErrorMessage('');
@@ -343,10 +345,14 @@ export const StepSurvey: React.FC<StepSurveyProps> = ({
         <div className="sticky bottom-4 z-40 pt-4">
           <button
             type="submit"
-            className="w-full py-4 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm sm:text-base shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-2 group"
+            className={`w-full py-4 px-6 rounded-2xl font-bold text-sm sm:text-base transition-all flex items-center justify-center gap-2 group ${
+              isComplete
+                ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl hover:shadow-2xl cursor-pointer'
+                : 'bg-slate-200 text-slate-400 border border-slate-300/60 shadow-none cursor-not-allowed hover:bg-slate-200'
+            }`}
           >
             <span>{t.submitButton}</span>
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            <ArrowRight className={`w-5 h-5 transition-transform ${isComplete ? 'group-hover:translate-x-1 text-white' : 'text-slate-400'}`} />
           </button>
         </div>
       </form>

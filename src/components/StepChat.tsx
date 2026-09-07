@@ -80,11 +80,11 @@ export const StepChat: React.FC<StepChatProps> = ({
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      const isS = e.code === 'KeyS' || e.key === 's' || e.key === 'S' || e.key === 'ㄴ';
+      const isS = e.code === 'KeyS' || e.key === 's' || e.key === 'S' || e.key === 'ㄴ' || e.keyCode === 83;
       
-      // Ctrl + Shift + S or Alt + S or F2
-      if (((e.ctrlKey || e.metaKey) && e.shiftKey && isS) || 
-          (e.altKey && isS) || 
+      // Alt + S (Primary) or Ctrl + Shift + S or F2
+      if ((e.altKey && isS) || 
+          ((e.ctrlKey || e.metaKey) && e.shiftKey && isS) || 
           e.key === 'F2') {
         e.preventDefault();
         e.stopPropagation();
