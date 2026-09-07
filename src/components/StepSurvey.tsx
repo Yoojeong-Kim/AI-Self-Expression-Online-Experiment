@@ -6,7 +6,7 @@ import { translations } from '@/data/locales';
 import { surveySections, allSurveyQuestions, SurveyQuestionItem } from '@/data/surveyQuestions';
 import { getStimulusImageUrl } from '@/data/stimuli';
 import { IOSScale } from '@/components/IOSScale';
-import { ArrowRight, AlertCircle, Sparkles, CheckCircle2, Image as ImageIcon } from 'lucide-react';
+import { ArrowRight, AlertCircle, Sparkles, CheckCircle2, Image as ImageIcon, Loader2 } from 'lucide-react';
 
 interface StepSurveyProps {
   language: Language;
@@ -24,6 +24,7 @@ export const StepSurvey: React.FC<StepSurveyProps> = ({
   const t = translations[language].survey;
   const [responses, setResponses] = useState<SurveyResponse>({});
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const totalQuestions = allSurveyQuestions.length;
   const answeredCount = Object.keys(responses).filter((k) => {
@@ -70,6 +71,7 @@ export const StepSurvey: React.FC<StepSurveyProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (answeredCount < totalQuestions) {
       setErrorMessage(
         language === 'ko'
@@ -78,6 +80,7 @@ export const StepSurvey: React.FC<StepSurveyProps> = ({
       );
       return;
     }
+    setIsSubmitting(true);
     onSubmitSurvey(responses);
   };
 
@@ -345,21 +348,32 @@ export const StepSurvey: React.FC<StepSurveyProps> = ({
         <div className="sticky bottom-4 z-40 pt-4">
           <button
             type="submit"
-            disabled={!isComplete}
+            disabled={!isComplete || isSubmitting}
             className={`w-full py-4 px-6 rounded-2xl font-bold text-sm sm:text-base transition-all flex items-center justify-center gap-2 group ${
-              isComplete
+              isSubmitting
+                ? 'bg-indigo-700 text-white shadow-md cursor-wait opacity-90'
+                : isComplete
                 ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl hover:shadow-2xl cursor-pointer ring-2 ring-indigo-600/30 ring-offset-2'
                 : 'bg-slate-200 text-slate-400 border border-slate-300 shadow-none cursor-not-allowed pointer-events-none'
             }`}
           >
-            <span>
-              {isComplete
-                ? t.submitButton
-                : language === 'ko'
-                ? `모든 문항에 응답해 주세요 (${answeredCount}/${totalQuestions})`
-                : `Please answer all questions (${answeredCount}/${totalQuestions})`}
-            </span>
-            <ArrowRight className={`w-5 h-5 transition-transform ${isComplete ? 'group-hover:translate-x-1 text-white' : 'text-slate-400'}`} />
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin text-white" />
+                <span>{language === 'ko' ? '설문 응답 제출 중...' : 'Submitting responses...'}</span>
+              </>
+            ) : (
+              <>
+                <span>
+                  {isComplete
+                    ? t.submitButton
+                    : language === 'ko'
+                    ? `모든 문항에 응답해 주세요 (${answeredCount}/${totalQuestions})`
+                    : `Please answer all questions (${answeredCount}/${totalQuestions})`}
+                </span>
+                <ArrowRight className={`w-5 h-5 transition-transform ${isComplete ? 'group-hover:translate-x-1 text-white' : 'text-slate-400'}`} />
+              </>
+            )}
           </button>
         </div>
       </form>

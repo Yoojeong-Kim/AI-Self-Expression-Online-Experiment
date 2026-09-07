@@ -230,56 +230,11 @@ export const StepChat: React.FC<StepChatProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-4 px-3 sm:px-4">
-      {/* Top Mission & 10-Min Timer Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 mb-3">
-        <div className="flex items-center justify-between gap-3 mb-2">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-1 rounded-md bg-indigo-600 text-white font-bold text-xs tracking-tight">
-              {activeTopic.timeLabel}
-            </span>
-            <h2 className="text-sm sm:text-base font-bold text-slate-800">
-              {activeTopic.title}
-            </h2>
-          </div>
-
-          {/* 10-min Countdown Badge */}
-          <div
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all ${
-              isTimeCompleted
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-300'
-                : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-            }`}
-          >
-            <Clock className="w-3.5 h-3.5" />
-            <span>
-              {isTimeCompleted ? (
-                <span className="flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  {t.timerCompletedBadge}
-                </span>
-              ) : (
-                <span>{t.timerBadge}: {formatTime(remainingSeconds)}</span>
-              )}
-            </span>
-          </div>
-        </div>
-
-        {/* Dynamic Mission Box */}
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs sm:text-sm">
-          <p className="text-slate-800 font-medium leading-snug">
-            {activeTopic.instruction}
-          </p>
-          <p className="text-slate-500 mt-1 font-mono text-[11px] sm:text-xs">
-            {activeTopic.commandHint}
-          </p>
-        </div>
-      </div>
-
+    <div className="max-w-4xl mx-auto py-6 px-3 sm:px-4">
       {/* Main Single Continuous Chat Messenger */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[540px]">
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col h-[620px]">
         {/* Messages Stream */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3.5">
           {messages.map((msg) => {
             if (msg.sender === 'system') {
               return (

@@ -39,7 +39,7 @@ export const translations = {
     },
     instructions: {
       title: '대화 진행 안내',
-      subtitle: '하나의 AI와 약 6분간 연속해서 대화를 나눕니다.',
+      subtitle: 'AI 친구와 편하게 대화를 나눠주세요.',
       rule1: '대화는 최소 6분 동안 중단 없이 진행됩니다.',
       rule2: '2분마다 새로운 대화 주제가 화면 상단에 제시됩니다.',
       rule3: '자연스러운 메신저 대화처럼 편안하게 대화해 주세요.',
@@ -186,7 +186,7 @@ export const translations = {
     },
     instructions: {
       title: 'Instructions',
-      subtitle: 'You will chat continuously with one AI assistant for at least 6 minutes.',
+      subtitle: 'Feel free to have a comfortable chat with your AI friend.',
       rule1: 'The chat lasts for a minimum of 6 minutes continuously.',
       rule2: 'A new conversation topic will appear at the top every 2 minutes.',
       rule3: 'Feel free to chat naturally, just like texting a friend.',
