@@ -22,27 +22,8 @@ export const StepComplete: React.FC<StepCompleteProps> = ({
     try {
       confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
     } catch (e) {}
-
-    const sendData = async () => {
-      try {
-        const res = await fetch('/api/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(experimentData),
-        });
-        const result = await res.json();
-        if (result.success && result.sheetsSynced) {
-          setStatusMessage(t.statusSynced);
-        } else {
-          setStatusMessage(t.statusLocal);
-        }
-      } catch (err) {
-        setStatusMessage(t.statusLocal);
-      }
-    };
-
-    sendData();
-  }, [experimentData, t.statusLocal, t.statusSynced]);
+    // API submission is now handled by page.tsx to prevent double submissions.
+  }, []);
 
   const p = experimentData.participant;
   const mins = Math.round(experimentData.totalChatSeconds / 60);
