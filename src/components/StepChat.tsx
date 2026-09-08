@@ -208,6 +208,9 @@ export const StepChat: React.FC<StepChatProps> = ({
         imageUrl: data.imageUrl,
       };
 
+      // Add an artificial delay to make the AI feel more human (typing simulation)
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
       setMessages((prev) => [...prev, aiMsg]);
     } catch (err) {
       console.error(err);
