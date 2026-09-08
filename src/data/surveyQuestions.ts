@@ -271,8 +271,8 @@ export const surveySections: SurveySection[] = [
       {
         id: 'mc_staged_2',
         type: 'likert7',
-        ko: '5-2-2. 이 사진은 자연스럽게 찍힌 사진처럼 보였다. (R)',
-        en: '5-2-2. This photo looked naturally taken. (R)'
+        ko: '5-2-2. 이 사진은 자연스럽게 찍힌 사진처럼 보였다.',
+        en: '5-2-2. This photo looked naturally taken.'
       },
       {
         id: 'mc_staged_3',
