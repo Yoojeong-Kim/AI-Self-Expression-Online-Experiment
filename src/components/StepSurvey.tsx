@@ -108,7 +108,7 @@ export const StepSurvey: React.FC<StepSurveyProps> = ({
           <div className="flex-1 space-y-3 text-center md:text-left">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>{language === 'ko' ? '1. 도입 안내' : '1. Introduction'}</span>
+              <span>{language === 'ko' ? '도입 안내' : 'Introduction'}</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-slate-800">
               {language === 'ko' ? 'AI 챗봇의 시각적 자기표현 연구' : 'Study on Visual Self-Presentation of AI Chatbots'}
@@ -165,18 +165,14 @@ export const StepSurvey: React.FC<StepSurveyProps> = ({
             key={section.id}
             className="bg-white rounded-3xl border border-slate-200 shadow-xs p-6 sm:p-7 space-y-5"
           >
-            {/* Section Header */}
-            <div className="border-b border-slate-100 pb-3.5">
-              <h3 className="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
-                {language === 'ko' ? section.titleKo : section.titleEn}
-              </h3>
-              {(section.instructionKo || section.instructionEn) && (
-                <p className="text-xs sm:text-sm text-slate-600 mt-1 font-medium bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100/60">
+            {/* Section Header (Instructions Only) */}
+            {(section.instructionKo || section.instructionEn) && (
+              <div className="border-b border-slate-100 pb-3.5">
+                <p className="text-xs sm:text-sm text-slate-600 font-medium bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100/60">
                   {language === 'ko' ? section.instructionKo : section.instructionEn}
                 </p>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Questions in Section */}
             <div className="space-y-5">
