@@ -108,7 +108,7 @@ export const StepSurvey: React.FC<StepSurveyProps> = ({
           <div className="flex-1 space-y-3 text-center md:text-left">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>{language === 'ko' ? '도입 안내' : 'Introduction'}</span>
+              <span>{language === 'ko' ? '1. 도입 안내' : '1. Introduction'}</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-slate-800">
               {language === 'ko' ? 'AI 챗봇의 시각적 자기표현 연구' : 'Study on Visual Self-Presentation of AI Chatbots'}
