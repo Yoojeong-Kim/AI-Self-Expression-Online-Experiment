@@ -241,8 +241,8 @@ export const StepChat: React.FC<StepChatProps> = ({
           {messages.map((msg) => {
             if (msg.sender === 'system') {
               return (
-                <div key={msg.id} className="flex justify-center my-2">
-                  <div className="bg-indigo-50 text-indigo-900 border border-indigo-100 px-3.5 py-1.5 rounded-full text-xs font-medium max-w-[90%] text-center shadow-xs">
+                <div key={msg.id} className="flex justify-center my-4">
+                  <div className="bg-indigo-100 text-indigo-900 border-2 border-indigo-200 px-5 py-3 rounded-2xl text-sm sm:text-base font-bold max-w-[95%] text-center shadow-md">
                     {msg.text}
                   </div>
                 </div>

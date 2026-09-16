@@ -37,25 +37,25 @@ export const surveySections: SurveySection[] = [
       {
         id: 'm1_control_1',
         type: 'likert7',
-        ko: '1. 이 AI 챗봇을 사용하는 동안 내가 상황을 통제하고 있다고 느낀다.',
+        ko: '1. 이 챗봇을 사용하는 동안 내가 상황을 통제하고 있다고 느낀다.',
         en: '1. While using this AI chatbot, I felt I was in control of the situation.'
       },
       {
         id: 'm1_control_2',
         type: 'likert7',
-        ko: '2. 나는 이 AI 챗봇이 행동하는 방식을 통제할 수 있다고 느낀다.',
+        ko: '2. 나는 이 챗봇이 행동하는 방식을 통제할 수 있다고 느낀다.',
         en: '2. I feel that I can control the way this AI chatbot acts.'
       },
       {
         id: 'm1_control_3',
         type: 'likert7',
-        ko: '3. 이 AI 챗봇은 내가 원하는대로 작동한다.',
+        ko: '3. 이 챗봇은 내가 원하는대로 작동한다.',
         en: '3. This AI chatbot works the way I want it to.'
       },
       {
         id: 'm1_control_4',
         type: 'likert7',
-        ko: '4. 나는 이 AI 챗봇에 대해 완전한 통제권을 가지고 있다.',
+        ko: '4. 나는 이 챗봇에 대해 완전한 통제권을 가지고 있다.',
         en: '4. I have complete control over this AI chatbot.'
       }
     ]
@@ -71,7 +71,7 @@ export const surveySections: SurveySection[] = [
       {
         id: 'm2_self_1',
         type: 'likert7',
-        ko: '1. 이 챗봇은 내가 나 자신을 보는 방식과 일치한다.',
+        ko: '1. 이 챗봇은 내가 나 자신을 바라보는 방식과 일치한다.',
         en: '1. This chatbot is consistent with how I see myself.'
       },
       {
@@ -99,7 +99,7 @@ export const surveySections: SurveySection[] = [
       {
         id: 'm2_ios_scale',
         type: 'ios',
-        ko: '1. 나와 이 챗봇의 관계 도식 선택',
+        ko: '1. 아래 그림 중 나와 이 챗봇의 관계를 가장 잘 나타내는 것을 선택해 주세요.',
         en: '1. Select the diagram representing your relationship with the chatbot'
       }
     ]
@@ -254,7 +254,7 @@ export const surveySections: SurveySection[] = [
       {
         id: 'mc_timing',
         type: 'singleChoice',
-        ko: '5-1. 챗봇의 사진은 언제 처음 보셨나요?',
+        ko: '5-1. 챗봇의 사진은 언제 처음 보셨나요? (단일선택)',
         en: '5-1. When did you first see the chatbot\'s photo?',
         options: [
           { value: '1', ko: '① 대화를 시작하기 전부터 프로필에 있었다', en: '① It was on the profile before the conversation started' },

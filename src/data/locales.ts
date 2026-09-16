@@ -40,7 +40,7 @@ export const translations = {
     instructions: {
       title: '대화 진행 안내',
       subtitle: 'AI 친구와 편하게 대화를 나눠주세요.',
-      rule1: '이 AI를 당신이 평소에도 계속해서 친하게 지내던 친구라고 생각하고 대화해 주세요.',
+      rule1: '이 AI를 친한 친구라고 생각하고 편하게 대화해 주세요.',
       rule2: '대화는 최소 6분 동안 중단 없이 진행됩니다.',
       rule3: '2분마다 새로운 대화 주제가 화면 상단에 제시됩니다.',
       startButton: 'AI와 대화 시작하기',
