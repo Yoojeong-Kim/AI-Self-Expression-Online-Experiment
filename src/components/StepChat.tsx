@@ -40,6 +40,7 @@ export const StepChat: React.FC<StepChatProps> = ({
   const [hasShownStimulus, setHasShownStimulus] = useState<boolean>(currentTiming === 'pre');
   const [devSkipUnlocked, setDevSkipUnlocked] = useState<boolean>(false);
 
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const stageRef = useRef<number>(1);
@@ -141,7 +142,12 @@ export const StepChat: React.FC<StepChatProps> = ({
 
   // Auto scroll
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   }, [messages, isLoading]);
 
   const activeTopic = activeTopics[currentStage - 1] || activeTopics[0];
@@ -237,7 +243,7 @@ export const StepChat: React.FC<StepChatProps> = ({
       {/* Main Single Continuous Chat Messenger */}
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col h-[620px]">
         {/* Messages Stream */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3.5">
+        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3.5">
           {messages.map((msg) => {
             if (msg.sender === 'system') {
               return (
