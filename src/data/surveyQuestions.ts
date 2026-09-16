@@ -37,25 +37,25 @@ export const surveySections: SurveySection[] = [
       {
         id: 'm1_control_1',
         type: 'likert7',
-        ko: '1. 이 챗봇을 사용하는 동안 내가 상황을 통제하고 있다고 느낀다.',
+        ko: '2-1-1. 이 챗봇을 사용하는 동안 내가 상황을 통제하고 있다고 느낀다.',
         en: '1. While using this AI chatbot, I felt I was in control of the situation.'
       },
       {
         id: 'm1_control_2',
         type: 'likert7',
-        ko: '2. 나는 이 챗봇이 행동하는 방식을 통제할 수 있다고 느낀다.',
+        ko: '2-1-2. 나는 이 챗봇이 행동하는 방식을 통제할 수 있다고 느낀다.',
         en: '2. I feel that I can control the way this AI chatbot acts.'
       },
       {
         id: 'm1_control_3',
         type: 'likert7',
-        ko: '3. 이 챗봇은 내가 원하는대로 작동한다.',
+        ko: '2-1-3. 이 챗봇은 내가 원하는대로 작동한다.',
         en: '3. This AI chatbot works the way I want it to.'
       },
       {
         id: 'm1_control_4',
         type: 'likert7',
-        ko: '4. 나는 이 챗봇에 대해 완전한 통제권을 가지고 있다.',
+        ko: '2-1-4. 나는 이 챗봇에 대해 완전한 통제권을 가지고 있다.',
         en: '4. I have complete control over this AI chatbot.'
       }
     ]
@@ -71,19 +71,19 @@ export const surveySections: SurveySection[] = [
       {
         id: 'm2_self_1',
         type: 'likert7',
-        ko: '1. 이 챗봇은 내가 나 자신을 바라보는 방식과 일치한다.',
+        ko: '3-1-1. 이 챗봇은 내가 나 자신을 바라보는 방식과 일치한다.',
         en: '1. This chatbot is consistent with how I see myself.'
       },
       {
         id: 'm2_self_2',
         type: 'likert7',
-        ko: '2. 이 챗봇은 내가 어떤 사람인지를 잘 반영한다.',
+        ko: '3-1-2. 이 챗봇은 내가 어떤 사람인지를 잘 반영한다.',
         en: '2. This chatbot reflects who I am.'
       },
       {
         id: 'm2_self_3',
         type: 'likert7',
-        ko: '3. 이 챗봇은 나와 비슷한 성격을 가지고 있다고 느낀다.',
+        ko: '3-1-3. 이 챗봇은 나와 비슷한 성격을 가지고 있다고 느낀다.',
         en: '3. I feel that this chatbot has a personality similar to mine.'
       }
     ]
@@ -99,7 +99,7 @@ export const surveySections: SurveySection[] = [
       {
         id: 'm2_ios_scale',
         type: 'ios',
-        ko: '1. 아래 그림 중 나와 이 챗봇의 관계를 가장 잘 나타내는 것을 선택해 주세요.',
+        ko: '3-2-1. 아래 그림 중 나와 이 챗봇의 관계를 가장 잘 나타내는 것을 선택해 주세요.',
         en: '1. Select the diagram representing your relationship with the chatbot'
       }
     ]
@@ -112,19 +112,19 @@ export const surveySections: SurveySection[] = [
       {
         id: 'dv_advice_1',
         type: 'likert7',
-        ko: '1. 나는 이 챗봇에게 제공받은 조언에 따라 행동할 의향이 있다.',
+        ko: '4-1-1. 나는 이 챗봇에게 제공받은 조언에 따라 행동할 의향이 있다.',
         en: '1. I intend to act in accordance with the advice provided by this chatbot.'
       },
       {
         id: 'dv_advice_2',
         type: 'likert7',
-        ko: '2. 나는 이 챗봇에게 제공받은 조언을 따를 계획이 있다.',
+        ko: '4-1-2. 나는 이 챗봇에게 제공받은 조언을 따를 계획이 있다.',
         en: '2. I plan to follow the advice provided by this chatbot.'
       },
       {
         id: 'dv_advice_3',
         type: 'likert7',
-        ko: '3. 나는 이 챗봇에게 제공받은 조언을 활용할 의향이 있다.',
+        ko: '4-1-3. 나는 이 챗봇에게 제공받은 조언을 활용할 의향이 있다.',
         en: '3. I am willing to utilize the advice provided by this chatbot.'
       }
     ]
@@ -137,25 +137,25 @@ export const surveySections: SurveySection[] = [
       {
         id: 'dv_emo_1',
         type: 'likert7',
-        ko: '1. 내가 외롭거나 우울할 때, 나는 이 챗봇에게 이야기하고 싶다.',
+        ko: '4-2-1. 내가 외롭거나 우울할 때, 나는 이 챗봇에게 이야기하고 싶다.',
         en: '1. When I feel lonely or depressed, I want to talk to this chatbot.'
       },
       {
         id: 'dv_emo_2',
         type: 'likert7',
-        ko: '2. 내가 어떤 일로 불안하거나 두려울 때, 나는 이 챗봇에게 이야기하고 싶다.',
+        ko: '4-2-2. 내가 어떤 일로 불안하거나 두려울 때, 나는 이 챗봇에게 이야기하고 싶다.',
         en: '2. When I feel anxious or afraid about something, I want to talk to this chatbot.'
       },
       {
         id: 'dv_emo_3',
         type: 'likert7',
-        ko: '3. 내가 위로나 격려가 필요할 때, 나는 이 챗봇에게 이야기하고 싶다.',
+        ko: '4-2-3. 내가 위로나 격려가 필요할 때, 나는 이 챗봇에게 이야기하고 싶다.',
         en: '3. When I need comfort or encouragement, I want to talk to this chatbot.'
       },
       {
         id: 'dv_emo_4',
         type: 'likert7',
-        ko: '4. 내가 기쁘거나 좋은 소식이 있을 때, 나는 이 챗봇에게 이야기하고 싶다.',
+        ko: '4-2-4. 내가 기쁘거나 좋은 소식이 있을 때, 나는 이 챗봇에게 이야기하고 싶다.',
         en: '4. When I have good news or feel happy, I want to talk to this chatbot.'
       }
     ]
@@ -168,37 +168,37 @@ export const surveySections: SurveySection[] = [
       {
         id: 'dv_psi_1',
         type: 'likert7',
-        ko: '1. 이 챗봇은 나를 인식하고 있는 것 같았다.',
+        ko: '4-3-1. 이 챗봇은 나를 인식하고 있는 것 같았다.',
         en: '1. This chatbot seemed to be aware of me.'
       },
       {
         id: 'dv_psi_2',
         type: 'likert7',
-        ko: '2. 이 챗봇은 내가 존재한다는 것을 알고 있는 것 같았다.',
+        ko: '4-3-2. 이 챗봇은 내가 존재한다는 것을 알고 있는 것 같았다.',
         en: '2. This chatbot seemed to know that I exist.'
       },
       {
         id: 'dv_psi_3',
         type: 'likert7',
-        ko: '3. 이 챗봇은 내가 이 챗봇을 인식하고 있다는 것을 알고 있는 것 같았다.',
+        ko: '4-3-3. 이 챗봇은 내가 이 챗봇을 인식하고 있다는 것을 알고 있는 것 같았다.',
         en: '3. This chatbot seemed to know that I was aware of it.'
       },
       {
         id: 'dv_psi_4',
         type: 'likert7',
-        ko: '4. 이 챗봇은 내가 이 챗봇에게 주의를 기울이고 있다는 것을 알고 있는 것 같았다.',
+        ko: '4-3-4. 이 챗봇은 내가 이 챗봇에게 주의를 기울이고 있다는 것을 알고 있는 것 같았다.',
         en: '4. This chatbot seemed to know that I was paying attention to it.'
       },
       {
         id: 'dv_psi_5',
         type: 'likert7',
-        ko: '5. 이 챗봇은 내가 이 챗봇에게 반응하고 있다는 것을 알고 있는 것 같았다.',
+        ko: '4-3-5. 이 챗봇은 내가 이 챗봇에게 반응하고 있다는 것을 알고 있는 것 같았다.',
         en: '5. This chatbot seemed to know that I was reacting to it.'
       },
       {
         id: 'dv_psi_6',
         type: 'likert7',
-        ko: '6. 이 챗봇은 내가 말하거나 행동한 것에 반응하는 것 같았다.',
+        ko: '4-3-6. 이 챗봇은 내가 말하거나 행동한 것에 반응하는 것 같았다.',
         en: '6. This chatbot seemed to respond to what I said or did.'
       }
     ]
@@ -211,37 +211,37 @@ export const surveySections: SurveySection[] = [
       {
         id: 'dv_cog_1',
         type: 'likert7',
-        ko: '1. 앞으로 내가 스스로 먼저 생각해 보지 않고, 이 챗봇에게 바로 답을 물어보는 경우가 많을 것 같다.',
+        ko: '4-4-1. 앞으로 내가 스스로 먼저 생각해 보지 않고, 이 챗봇에게 바로 답을 물어보는 경우가 많을 것 같다.',
         en: '1. In the future, I feel I will often ask this chatbot for answers right away without thinking for myself first.'
       },
       {
         id: 'dv_cog_2',
         type: 'likert7',
-        ko: '2. 이 챗봇을 사용한 이후, 스스로 문제를 분석하고 해결하는 능력이 저하되었다고 느낀다.',
+        ko: '4-4-2. 이 챗봇을 사용한 이후, 스스로 문제를 분석하고 해결하는 능력이 저하되었다고 느낀다.',
         en: '2. After using this chatbot, I feel my ability to independently analyze and solve problems has diminished.'
       },
       {
         id: 'dv_cog_3',
         type: 'likert7',
-        ko: '3. 어려운 문제에 직면하면, 스스로 충분히 생각해 보기보다 이 챗봇에게 의존할 것 같다.',
+        ko: '4-4-3. 어려운 문제에 직면하면, 스스로 충분히 생각해 보기보다 이 챗봇에게 의존할 것 같다.',
         en: '3. When facing difficult problems, I feel I will rely on this chatbot rather than thinking through them thoroughly on my own.'
       },
       {
         id: 'dv_cog_4',
         type: 'likert7',
-        ko: '4. 이 챗봇을 사용하면서 스스로 생각하려는 노력이 줄었고, 이 챗봇이 대신 생각해 주기를 바라게 되었다.',
+        ko: '4-4-4. 이 챗봇을 사용하면서 스스로 생각하려는 노력이 줄었고, 이 챗봇이 대신 생각해 주기를 바라게 되었다.',
         en: '4. While using this chatbot, I made less effort to think for myself and came to expect the chatbot to think for me.'
       },
       {
         id: 'dv_cog_5',
         type: 'likert7',
-        ko: '5. 내 판단을 충분히 신뢰하기보다 이 챗봇이 나를 대신해 판단하고 결정하도록 하는 데 익숙해질 것 같다.',
+        ko: '4-4-5. 내 판단을 충분히 신뢰하기보다 이 챗봇이 나를 대신해 판단하고 결정하도록 하는 데 익숙해질 것 같다.',
         en: '5. Rather than trusting my own judgment, I feel I will become used to letting this chatbot judge and decide for me.'
       },
       {
         id: 'dv_cog_6',
         type: 'likert7',
-        ko: '6. 깊이 있는 사고가 필요한 문제를 이 챗봇에게 맡기게 될 것 같다.',
+        ko: '4-4-6. 깊이 있는 사고가 필요한 문제를 이 챗봇에게 맡기게 될 것 같다.',
         en: '6. I feel I will leave problems requiring deep thinking to this chatbot.'
       }
     ]
