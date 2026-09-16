@@ -265,26 +265,26 @@ export const surveySections: SurveySection[] = [
       {
         id: 'mc_staged_1',
         type: 'likert7',
-        ko: '1. 이 사진은 연출된 사진처럼 보였다.',
+        ko: '2. 이 사진은 연출된 사진처럼 보였다.',
         en: '5-2-1. This photo looked staged / artificial.'
       },
       {
         id: 'mc_staged_2',
         type: 'likert7',
-        ko: '2. 이 사진은 자연스럽게 찍힌 사진처럼 보였다.',
+        ko: '3. 이 사진은 자연스럽게 찍힌 사진처럼 보였다.',
         en: '5-2-2. This photo looked naturally taken.'
       },
       {
         id: 'mc_staged_3',
         type: 'likert7',
-        ko: '3. 이 사진은 잘 보이려고 신경 써서 준비한 것처럼 보였다.',
+        ko: '4. 이 사진은 잘 보이려고 신경 써서 준비한 것처럼 보였다.',
         en: '5-2-3. This photo looked carefully prepared to make a good impression.'
       },
       {
         id: 'mc_attention',
         type: 'likert7',
         isAttentionCheck: true,
-        ko: '1. 이 문항은 성실한 응답을 확인하기 위한 것입니다. \'전혀 그렇지 않다 (1)\'를 선택해 주세요.',
+        ko: '5. 이 문항은 성실한 응답을 확인하기 위한 것입니다. \'전혀 그렇지 않다 (1)\'를 선택해 주세요.',
         en: '5-3. This question is to verify attentive responses. Please select \'Strongly Disagree (1)\'.'
       }
     ]
@@ -309,31 +309,31 @@ export const surveySections: SurveySection[] = [
       {
         id: 'ctrl_exp_1',
         type: 'likert7',
-        ko: '1. 나는 대화에 몰입했다.',
+        ko: '3. 나는 대화에 몰입했다.',
         en: '6-2-1. I was deeply engaged / immersed in the conversation.'
       },
       {
         id: 'ctrl_exp_2',
         type: 'likert7',
-        ko: '2. 대화에서 나눈 고민은 실제로 내가 겪고 있는 문제였다.',
+        ko: '4. 대화에서 나눈 고민은 실제로 내가 겪고 있는 문제였다.',
         en: '6-2-2. The concern discussed in the chat was an actual problem I have experienced.'
       },
       {
         id: 'ctrl_exp_3',
         type: 'likert7',
-        ko: '3. 챗봇의 답변 자체에 만족했다.',
+        ko: '5. 챗봇의 답변 자체에 만족했다.',
         en: '6-2-3. I was satisfied with the chatbot\'s responses themselves.'
       },
       {
         id: 'ctrl_prior_1',
         type: 'likert7',
-        ko: '1. AI가 만든 이미지는 사용자마다 다르게 나온다는 것을 알고 있었다.',
+        ko: '6. AI가 만든 이미지는 사용자마다 다르게 나온다는 것을 알고 있었다.',
         en: '6-3-1. I knew that AI-generated images vary across different users.'
       },
       {
         id: 'ctrl_prior_2',
         type: 'yesNo',
-        ko: '2. 이번 실험 전에도 AI에게 “네 모습을 그려줘”라고 요청해 본 적이 있다.',
+        ko: '7. 이번 실험 전에도 AI에게 “네 모습을 그려줘”라고 요청해 본 적이 있다.',
         en: '6-3-2. Prior to this study, I had asked an AI to \'draw/show your appearance\'.'
       }
     ]
@@ -368,43 +368,43 @@ export const surveySections: SurveySection[] = [
       {
         id: 'trait_lit_1',
         type: 'likert7',
-        ko: '1. 나는 AI 기술이 나에게 어떻게 도움이 될 수 있는지 알고 있다.',
+        ko: '3. 나는 AI 기술이 나에게 어떻게 도움이 될 수 있는지 알고 있다.',
         en: '7-2-1. I know how AI technology can help me.'
       },
       {
         id: 'trait_lit_2',
         type: 'likert7',
-        ko: '2. 나는 AI 기술을 능숙하게 사용하여 일상 업무에 활용할 수 있다.',
+        ko: '4. 나는 AI 기술을 능숙하게 사용하여 일상 업무에 활용할 수 있다.',
         en: '7-2-2. I can use AI technology proficiently in my daily tasks.'
       },
       {
         id: 'trait_lit_3',
         type: 'likert7',
-        ko: '3. 나는 AI 기술을 일정 기간 사용한 후 그 기능과 한계를 평가할 수 있다.',
+        ko: '5. 나는 AI 기술을 일정 기간 사용한 후 그 기능과 한계를 평가할 수 있다.',
         en: '7-2-3. After using an AI technology, I can assess its capabilities and limitations.'
       },
       {
         id: 'trait_lit_4',
         type: 'likert7',
-        ko: '4. 나는 AI 기술의 오용 가능성에 항상 주의를 기울인다.',
+        ko: '6. 나는 AI 기술의 오용 가능성에 항상 주의를 기울인다.',
         en: '7-2-4. I am always mindful of the potential misuse of AI technology.'
       },
       {
         id: 'trait_lone_1',
         type: 'likert7',
-        ko: '1. 나는 함께할 사람이 없다고 느낀다.',
+        ko: '7. 나는 함께할 사람이 없다고 느낀다.',
         en: '7-3-1. I feel that I lack companionship.'
       },
       {
         id: 'trait_lone_2',
         type: 'likert7',
-        ko: '2. 나는 소외되어 있다고 느낀다.',
+        ko: '8. 나는 소외되어 있다고 느낀다.',
         en: '7-3-2. I feel left out.'
       },
       {
         id: 'trait_lone_3',
         type: 'likert7',
-        ko: '3. 나는 다른 사람들과 단절되어 있다고 느낀다.',
+        ko: '9. 나는 다른 사람들과 단절되어 있다고 느낀다.',
         en: '7-3-3. I feel isolated from others.'
       }
     ]
