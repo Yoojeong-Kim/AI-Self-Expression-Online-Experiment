@@ -57,7 +57,7 @@ export const StepChat: React.FC<StepChatProps> = ({
       {
         id: 'sys-init',
         sender: 'system',
-        text: `${initTopicLabel} [${activeTopics[0].title}] - ${activeTopics[0].instruction}`,
+        text: `${initTopicLabel.trim()} [${activeTopics[0].title}]\n${activeTopics[0].instruction}`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
       {
@@ -112,7 +112,7 @@ export const StepChat: React.FC<StepChatProps> = ({
             {
               id: 'sys-stage-2',
               sender: 'system',
-              text: `${t.systemTopicChanged} [${activeTopics[1].title}] - ${activeTopics[1].instruction}`,
+              text: `${t.systemTopicChanged.trim()} [${activeTopics[1].title}]\n${activeTopics[1].instruction}`,
               timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             },
           ]);
@@ -127,7 +127,7 @@ export const StepChat: React.FC<StepChatProps> = ({
             {
               id: 'sys-stage-3',
               sender: 'system',
-              text: `${t.systemTopicChanged} [${activeTopics[2].title}] - ${activeTopics[2].instruction}`,
+              text: `${t.systemTopicChanged.trim()} [${activeTopics[2].title}]\n${activeTopics[2].instruction}`,
               timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             },
           ]);
@@ -246,10 +246,24 @@ export const StepChat: React.FC<StepChatProps> = ({
         <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3.5">
           {messages.map((msg) => {
             if (msg.sender === 'system') {
+              const lines = msg.text.split('\n');
               return (
                 <div key={msg.id} className="flex justify-center my-4">
-                  <div className="bg-indigo-100 text-indigo-900 border-2 border-indigo-200 px-5 py-3 rounded-2xl text-sm sm:text-base font-bold max-w-[95%] text-center shadow-md">
-                    {msg.text}
+                  <div className="bg-indigo-50 text-indigo-950 border-2 border-indigo-200/90 px-5 py-3 rounded-2xl max-w-[95%] text-center shadow-md">
+                    {lines.length > 1 ? (
+                      <>
+                        <div className="text-sm sm:text-base font-bold text-indigo-900 mb-1">
+                          {lines[0]}
+                        </div>
+                        <div className="text-xs sm:text-sm font-medium text-slate-700 leading-relaxed">
+                          {lines.slice(1).join('\n')}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-sm sm:text-base font-bold text-indigo-900 whitespace-pre-line">
+                        {msg.text}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
