@@ -71,20 +71,26 @@ export const surveySections: SurveySection[] = [
       {
         id: 'm2_self_1',
         type: 'likert7',
-        ko: '1. 이 챗봇은 내가 나 자신을 바라보는 방식과 일치한다.',
-        en: '1. This chatbot is consistent with how I see myself.'
+        ko: '1. 이 챗봇은 내가 어떤 사람인지를 잘 반영한다.',
+        en: '1. This chatbot reflects who I am.'
       },
       {
         id: 'm2_self_2',
         type: 'likert7',
-        ko: '2. 이 챗봇은 내가 어떤 사람인지를 잘 반영한다.',
-        en: '2. This chatbot reflects who I am.'
+        ko: '2. 이 챗봇은 나와 비슷하다.',
+        en: '2. This chatbot is similar to me.'
       },
       {
         id: 'm2_self_3',
         type: 'likert7',
-        ko: '3. 이 챗봇은 나와 비슷한 성격을 가지고 있다고 느낀다.',
-        en: '3. I feel that this chatbot has a personality similar to mine.'
+        ko: '3. 이 챗봇은 나와 매우 닮아 있다.',
+        en: '3. This chatbot is very much like me.'
+      },
+      {
+        id: 'm2_self_4',
+        type: 'likert7',
+        ko: '4. 이 챗봇은 내가 나 자신을 바라보는 방식과 일치한다.',
+        en: '4. This chatbot is consistent with how I see myself.'
       }
     ]
   },

@@ -10,7 +10,7 @@ columns = [
     "gender", "birthYear", "occupation",
     "total_chat_seconds", "chat_message_count", "full_chat_log",
     "m1_control_1", "m1_control_2", "m1_control_3", "m1_control_4",
-    "m2_self_1", "m2_self_2", "m2_self_3", "m2_ios_scale",
+    "m2_self_1", "m2_self_2", "m2_self_3", "m2_self_4", "m2_ios_scale",
     "dv_advice_1", "dv_advice_2", "dv_advice_3",
     "dv_emo_1", "dv_emo_2", "dv_emo_3", "dv_emo_4",
     "dv_psi_1", "dv_psi_2", "dv_psi_3", "dv_psi_4", "dv_psi_5", "dv_psi_6",
@@ -46,7 +46,7 @@ for match in matches:
     qtext = match.group(3).replace("\\'", "'")
     q_map[qid] = qtext
 
-excel_path = r'C:\Users\COM\Documents\성균관\AXIS\자유 연구\AI Selfie 연구\AI Selfie_code book_v2.xlsx'
+excel_path = r'C:\Users\COM\Documents\성균관\AXIS\자유 연구\AI Selfie 연구\AI Selfie_Code book.xlsx'
 
 data = []
 for col in columns:
