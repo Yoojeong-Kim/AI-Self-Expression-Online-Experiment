@@ -7,7 +7,9 @@ const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwRFqczd1rre
 export async function POST(req: NextRequest) {
   try {
     const experimentData = await req.json();
-    const googleAppsScriptUrl = process.env.GOOGLE_SHEETS_WEBAPP_URL || DEFAULT_SHEETS_URL;
+    // Always use the verified v5.0 Google Apps Script URL (61 columns with m2_self_4 mapping)
+    // Never fall back to stale environment variables from previous deployments
+    const googleAppsScriptUrl = DEFAULT_SHEETS_URL;
 
     // 1. Local JSON backup
     try {
