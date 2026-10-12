@@ -87,9 +87,6 @@ export const IRBConsentViewer: React.FC<IRBConsentViewerProps> = ({
           className="cursor-pointer text-xs sm:text-sm font-bold text-slate-900 leading-snug"
         >
           {irbConsentData.agreementCheckboxLabel}
-          <span className="block text-xs font-normal text-slate-500 mt-1">
-            (위 설명문을 끝까지 확인하였으며, 엠브레인 패널 리워드 지급 및 AI 챗봇 연구 참여에 동의합니다.)
-          </span>
         </label>
       </div>
     </div>

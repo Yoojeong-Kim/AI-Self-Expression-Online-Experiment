@@ -184,6 +184,6 @@ export const irbConsentData = {
   ] as IRBSection[],
 
   confirmationNotice: '성균관대 기관생명윤리위원회 위원장 귀하\n본인은 본 동의서의 내용을 읽고 이해하였으며, 궁금한 사항은 연구자에게 문의할 수 있음을 알고 있습니다. 본인은 자발적으로 본 연구에 참여하는 것에 동의합니다.',
-  agreementCheckboxLabel: '연구 설명문 및 참여 동의서의 내용을 모두 확인하였으며, 본 연구 참여에 자발적으로 동의합니다. (필수)',
+  agreementCheckboxLabel: '연구 설명문 및 참여 동의서의 내용을 모두 확인하였으며, 본 연구 참여에 자발적으로 동의합니다.',
   systemAutoRecordNote: '※ 본 동의는 온라인 화면에서 동의란을 선택하는 전자 동의로 진행되며, 동의 일시 및 참가자 번호는 시스템에 자동 기록됩니다.',
 };
