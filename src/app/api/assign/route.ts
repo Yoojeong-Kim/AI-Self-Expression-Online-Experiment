@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { ExperimentCondition, ImageType, DisclosureTiming } from '@/types/experiment';
@@ -34,26 +34,37 @@ function saveCounts(counts: ConditionCounter) {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const counts = getCounts();
   const conditions: ExperimentCondition[] = ['A_pre', 'A_mid', 'B_pre', 'B_mid'];
 
-  // Find condition with the minimum participant count for perfectly balanced recruitment
-  let minCount = Infinity;
-  let candidateConditions: ExperimentCondition[] = [];
+  const { searchParams } = new URL(req.url);
+  const requestedCond = (searchParams.get('cond') || searchParams.get('c') || '').trim() as ExperimentCondition;
 
-  for (const cond of conditions) {
-    const c = counts[cond] || 0;
-    if (c < minCount) {
-      minCount = c;
-      candidateConditions = [cond];
-    } else if (c === minCount) {
-      candidateConditions.push(cond);
+  let assignedCondition: ExperimentCondition;
+
+  if (requestedCond && conditions.includes(requestedCond)) {
+    // Explicit condition requested via URL parameter (?cond=A_pre)
+    assignedCondition = requestedCond;
+  } else {
+    // Find condition with the minimum participant count for balanced fallback recruitment
+    let minCount = Infinity;
+    let candidateConditions: ExperimentCondition[] = [];
+
+    for (const cond of conditions) {
+      const c = counts[cond] || 0;
+      if (c < minCount) {
+        minCount = c;
+        candidateConditions = [cond];
+      } else if (c === minCount) {
+        candidateConditions.push(cond);
+      }
     }
+
+    // Random pick among tied minimum candidates
+    assignedCondition = candidateConditions[Math.floor(Math.random() * candidateConditions.length)];
   }
 
-  // Random pick among tied minimum candidates
-  const assignedCondition = candidateConditions[Math.floor(Math.random() * candidateConditions.length)];
   counts[assignedCondition] = (counts[assignedCondition] || 0) + 1;
   saveCounts(counts);
 

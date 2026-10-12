@@ -31,13 +31,18 @@ export default function Home() {
     setStartedAt(now);
     startedAtRef.current = now;
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const condParam = (urlParams.get('cond') || urlParams.get('c') || '').trim();
+    const pidParam = (urlParams.get('pid') || urlParams.get('id') || '').trim();
+
     const assignCondition = async () => {
       try {
-        const res = await fetch('/api/assign');
+        const queryStr = condParam ? `?cond=${encodeURIComponent(condParam)}` : '';
+        const res = await fetch(`/api/assign${queryStr}`);
         if (res.ok) {
           const data = await res.json();
           const pInfo: ParticipantInfo = {
-            id: data.participantId,
+            id: pidParam || data.participantId,
             imageType: data.imageType,
             timing: data.timing,
             condition: data.condition,
@@ -55,11 +60,17 @@ export default function Home() {
         console.warn('Assign API error, using fallback assignment:', e);
       }
 
-      // Fallback in-client randomizer
-      const randomId = 'P' + Math.random().toString(36).substring(2, 8).toUpperCase();
-      const imageType = Math.random() < 0.5 ? 'A' : 'B';
-      const timing = Math.random() < 0.5 ? 'pre' : 'mid';
-      const condition = `${imageType}_${timing}` as any;
+      // Fallback in-client randomizer or param assignment
+      const validConditions = ['A_pre', 'A_mid', 'B_pre', 'B_mid'];
+      const assignedCondition = validConditions.includes(condParam)
+        ? condParam
+        : validConditions[Math.floor(Math.random() * validConditions.length)];
+
+      const [imageTypeStr, timingStr] = assignedCondition.split('_');
+      const randomId = pidParam || ('P' + Math.random().toString(36).substring(2, 8).toUpperCase());
+      const imageType = imageTypeStr as any;
+      const timing = timingStr as any;
+      const condition = assignedCondition as any;
 
       const pInfo: ParticipantInfo = {
         id: randomId,
