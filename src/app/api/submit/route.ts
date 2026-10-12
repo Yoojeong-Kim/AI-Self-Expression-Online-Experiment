@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
       gender_pre: p.gender,
       birthYear_pre: p.birthYear,
       occupation_pre: p.occupation,
+      has_ai_experience: p.hasAiExperience || 'yes',
       total_chat_seconds: experimentData.totalChatSeconds || 0,
       chat_message_count: msgs.length,
       full_chat_log: formattedChatLog,

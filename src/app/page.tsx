@@ -81,7 +81,7 @@ export default function Home() {
 
   const [finalExperimentData, setFinalExperimentData] = useState<ExperimentData | null>(null);
 
-  const handleDemographicsComplete = (info: { gender: string; birthYear: string; occupation: string }) => {
+  const handleDemographicsComplete = (info: { gender: string; birthYear: string; occupation: string; hasAiExperience?: string }) => {
     const updated = participantRef.current ? { ...participantRef.current, ...info } : null;
     if (updated) {
       setParticipant(updated);

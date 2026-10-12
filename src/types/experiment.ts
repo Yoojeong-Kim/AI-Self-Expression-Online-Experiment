@@ -16,6 +16,7 @@ export interface ParticipantInfo {
   birthYear: string;
   occupation: string;
   consentedAt: string;
+  hasAiExperience?: string;
 }
 
 export interface ChatMessage {
