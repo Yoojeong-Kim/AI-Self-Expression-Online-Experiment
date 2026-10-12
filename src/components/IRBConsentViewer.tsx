@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { irbConsentData } from '@/data/irbConsent';
-import { FileText, ChevronDown, Printer } from 'lucide-react';
+import { FileText, ChevronDown } from 'lucide-react';
 
 interface IRBConsentViewerProps {
   consented: boolean;
@@ -13,10 +13,6 @@ export const IRBConsentViewer: React.FC<IRBConsentViewerProps> = ({
   consented,
   onConsentChange,
 }) => {
-  const handlePrint = () => {
-    window.print();
-  };
-
   return (
     <div className="space-y-4">
       {/* Scrollable Document Container */}
@@ -27,21 +23,10 @@ export const IRBConsentViewer: React.FC<IRBConsentViewerProps> = ({
             <FileText className="w-3.5 h-3.5 text-indigo-600" />
             <span>연구 참여 설명문 및 동의서</span>
           </span>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-800 transition-colors print:hidden cursor-pointer"
-              title="동의서 사본 인쇄 또는 PDF 저장"
-            >
-              <Printer className="w-3 h-3" />
-              <span>사본 인쇄/저장</span>
-            </button>
-            <span className="hidden sm:flex items-center gap-1 text-slate-400">
-              <span>스크롤하여 확인</span>
-              <ChevronDown className="w-3.5 h-3.5 animate-bounce" />
-            </span>
-          </div>
+          <span className="flex items-center gap-1 text-slate-400">
+            <span>스크롤하여 확인</span>
+            <ChevronDown className="w-3.5 h-3.5 animate-bounce" />
+          </span>
         </div>
 
         {/* Scroll Body (Starts directly from 1. 연구 배경) */}
