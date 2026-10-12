@@ -4,7 +4,7 @@ export const translations = {
   ko: {
     appTitle: 'AI 상호작용 연구',
     header: {
-      step1: '기본정보',
+      step1: '동의 및 기본정보',
       step2: '안내',
       step3: 'AI 대화',
       step4: '설문',
@@ -151,7 +151,7 @@ export const translations = {
   en: {
     appTitle: 'AI Interaction Research',
     header: {
-      step1: 'Profile',
+      step1: 'Consent & Info',
       step2: 'Guide',
       step3: 'AI Chat',
       step4: 'Survey',
