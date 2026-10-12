@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { irbConsentData } from '@/data/irbConsent';
-import { FileText, Users, ShieldCheck, ChevronDown, Printer } from 'lucide-react';
+import { FileText, ChevronDown, Printer } from 'lucide-react';
 
 interface IRBConsentViewerProps {
   consented: boolean;
@@ -19,98 +19,33 @@ export const IRBConsentViewer: React.FC<IRBConsentViewerProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Document Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            {irbConsentData.formNumber}
-          </span>
-          <span className="text-xs font-semibold text-slate-500">
-            생명윤리심의 통과 과제
-          </span>
-        </div>
-        <button
-          type="button"
-          onClick={handlePrint}
-          className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors self-start sm:self-auto print:hidden"
-          title="동의서 인쇄 또는 PDF 저장"
-        >
-          <Printer className="w-3.5 h-3.5" />
-          <span>동의서 사본 인쇄/저장</span>
-        </button>
-      </div>
-
       {/* Scrollable Document Container */}
       <div className="relative border border-slate-200/90 rounded-2xl bg-white shadow-xs overflow-hidden">
-        {/* Subtle scroll hint badge */}
-        <div className="bg-slate-50/90 border-b border-slate-200 px-4 py-2 flex items-center justify-between text-[11px] text-slate-500 font-medium">
-          <span className="flex items-center gap-1.5 font-semibold text-slate-700">
+        {/* Document Top Bar */}
+        <div className="bg-slate-50/90 border-b border-slate-200 px-4 py-2.5 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+          <span className="flex items-center gap-1.5 font-bold text-slate-700">
             <FileText className="w-3.5 h-3.5 text-indigo-600" />
-            {irbConsentData.documentTitle}
+            <span>연구 참여 설명문 및 동의서</span>
           </span>
-          <span className="flex items-center gap-1 text-slate-400">
-            <span>스크롤하여 전문 확인</span>
-            <ChevronDown className="w-3.5 h-3.5 animate-bounce" />
-          </span>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-800 transition-colors print:hidden cursor-pointer"
+              title="동의서 사본 인쇄 또는 PDF 저장"
+            >
+              <Printer className="w-3 h-3" />
+              <span>사본 인쇄/저장</span>
+            </button>
+            <span className="hidden sm:flex items-center gap-1 text-slate-400">
+              <span>스크롤하여 확인</span>
+              <ChevronDown className="w-3.5 h-3.5 animate-bounce" />
+            </span>
+          </div>
         </div>
 
-        {/* Scroll Body */}
+        {/* Scroll Body (Starts directly from 1. 연구 배경) */}
         <div className="p-4 sm:p-6 max-h-[360px] sm:max-h-[420px] overflow-y-auto space-y-5 text-xs text-slate-700 leading-relaxed font-sans pr-3 scrollbar-thin scrollbar-thumb-slate-300">
-          {/* Notice Alert */}
-          <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-amber-900 text-xs leading-relaxed">
-            <p className="font-semibold">{irbConsentData.notice}</p>
-          </div>
-
-          {/* Project Title Card */}
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
-            <h4 className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
-              <span>■ 연구과제</span>
-            </h4>
-            <div className="space-y-1 pl-2">
-              <p>
-                <strong className="text-slate-900">[국문]</strong> {irbConsentData.projectTitleKo}
-              </p>
-              <p className="text-slate-600">
-                <strong className="text-slate-900">[영문]</strong> {irbConsentData.projectTitleEn}
-              </p>
-            </div>
-          </div>
-
-          {/* Research Team Table */}
-          <div className="space-y-2">
-            <h4 className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
-              <Users className="w-3.5 h-3.5 text-indigo-600" />
-              <span>■ 연구진 정보</span>
-            </h4>
-            <div className="overflow-x-auto rounded-xl border border-slate-200">
-              <table className="w-full text-left text-[11px] border-collapse bg-white">
-                <thead>
-                  <tr className="bg-slate-50 text-slate-600 border-b border-slate-200">
-                    <th className="py-2 px-3 font-semibold">구분</th>
-                    <th className="py-2 px-3 font-semibold">소속 및 직위</th>
-                    <th className="py-2 px-3 font-semibold">성명</th>
-                    <th className="py-2 px-3 font-semibold">전공분야</th>
-                    <th className="py-2 px-3 font-semibold">연락처</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {irbConsentData.researchers.map((r, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/50">
-                      <td className="py-1.5 px-3 font-medium text-slate-900">{r.role}</td>
-                      <td className="py-1.5 px-3 text-slate-600">{r.affiliation} {r.position}</td>
-                      <td className="py-1.5 px-3 font-semibold text-slate-800">{r.name}</td>
-                      <td className="py-1.5 px-3 text-slate-600">{r.major}</td>
-                      <td className="py-1.5 px-3 font-mono text-slate-600">{r.phone}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <hr className="border-slate-200" />
-
           {/* 14 Sections Content */}
           <div className="space-y-4">
             {irbConsentData.sections.map((sec) => (

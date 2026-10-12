@@ -174,7 +174,7 @@ export const StepDemographics: React.FC<StepDemographicsProps> = ({
                 </label>
                 {calculatedAge !== null && !isAgeDisqualified && (
                   <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-100">
-                    약 만 {calculatedAge}세
+                    만 {calculatedAge}세
                   </span>
                 )}
               </div>
