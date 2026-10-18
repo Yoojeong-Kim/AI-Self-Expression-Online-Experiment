@@ -47,10 +47,6 @@ export const StepDemographics: React.FC<StepDemographicsProps> = ({
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-9 space-y-7">
         {/* Header Introduction */}
         <div className="text-center border-b border-slate-100 pb-5">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold mb-3">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{language === 'ko' ? 'AI 챗봇 대화 과제 안내' : 'AI Chatbot Task Guide'}</span>
-          </div>
           <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">
             {language === 'ko' ? 'AI 챗봇과의 대화 시작 전 안내' : 'Before You Chat with the AI'}
           </h2>
@@ -75,9 +71,6 @@ export const StepDemographics: React.FC<StepDemographicsProps> = ({
             <label className="block text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5">
               <User className="w-4 h-4 text-indigo-600" />
               <span>{language === 'ko' ? '귀하의 성별을 선택해 주세요' : 'Please select your gender'}</span>
-              <span className="text-indigo-600 text-xs font-normal">
-                {language === 'ko' ? '(대화 챗봇 매칭용)' : '(For chatbot matching)'}
-              </span>
             </label>
 
             <div className="grid grid-cols-2 gap-3 pt-1">

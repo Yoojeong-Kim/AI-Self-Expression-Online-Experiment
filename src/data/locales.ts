@@ -145,7 +145,7 @@ export const translations = {
       totalChatTime: '대화 시간',
       statusSynced: '✓ 데이터가 구글 스프레드시트에 성공적으로 저장되었습니다.',
       statusLocal: '데이터가 안전하게 저장되었습니다.',
-      closeNotice: '패널 적립금 지급을 위해 반드시 엠브레인 링크로 돌아가 주십시오.',
+      closeNotice: '패널 적립금 지급 및 최종 완료를 위해, 처음 설문을 시작하셨던 엠브레인 창(링크)으로 꼭 돌아가 주십시오.',
     },
   },
   en: {
