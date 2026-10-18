@@ -4,8 +4,8 @@ export const translations = {
   ko: {
     appTitle: 'AI 상호작용 연구',
     header: {
-      step1: '동의 및 기본정보',
-      step2: '안내',
+      step1: '기본 안내',
+      step2: '대화 안내',
       step3: 'AI 대화',
       step4: '설문',
       step5: '완료',
@@ -145,14 +145,14 @@ export const translations = {
       totalChatTime: '대화 시간',
       statusSynced: '✓ 데이터가 구글 스프레드시트에 성공적으로 저장되었습니다.',
       statusLocal: '데이터가 안전하게 저장되었습니다.',
-      closeNotice: '이제 창을 닫으셔도 됩니다.',
+      closeNotice: '패널 적립금 지급을 위해 반드시 엠브레인 링크로 돌아가 주십시오.',
     },
   },
   en: {
     appTitle: 'AI Interaction Research',
     header: {
-      step1: 'Consent & Info',
-      step2: 'Guide',
+      step1: 'Gender & Guide',
+      step2: 'Chat Guide',
       step3: 'AI Chat',
       step4: 'Survey',
       step5: 'Done',
@@ -292,7 +292,7 @@ export const translations = {
       totalChatTime: 'Chat Duration',
       statusSynced: '✓ Data has been saved to Google Spreadsheet.',
       statusLocal: 'Data has been safely saved.',
-      closeNotice: 'You may now close this window.',
+      closeNotice: 'Please return to the Embrain survey link to receive your panel reward points.',
     },
   },
 };

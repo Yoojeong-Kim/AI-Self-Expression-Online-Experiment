@@ -72,8 +72,8 @@ export const StepComplete: React.FC<StepCompleteProps> = ({
           </div>
         </div>
 
-        <div className="mt-8 flex items-center justify-center gap-1.5 text-xs text-slate-400">
-          <ShieldCheck className="w-4 h-4 text-emerald-600" />
+        <div className="mt-8 p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-xs">
+          <ShieldCheck className="w-5 h-5 text-amber-600 flex-shrink-0" />
           <span>{t.closeNotice}</span>
         </div>
       </div>

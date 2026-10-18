@@ -102,7 +102,7 @@ export default function Home() {
       setParticipant(p);
       participantRef.current = p;
     }
-    setCurrentStep('instructions');
+    setCurrentStep('chat');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 

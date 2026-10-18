@@ -25,11 +25,10 @@ export const Header: React.FC<HeaderProps> = ({
   const t = translations[language];
 
   const steps: { key: Step; label: string; num: number }[] = [
-    { key: 'demographics', label: t.header.step1, num: 1 },
-    { key: 'instructions', label: t.header.step2, num: 2 },
-    { key: 'chat', label: t.header.step3, num: 3 },
-    { key: 'survey', label: t.header.step4, num: 4 },
-    { key: 'complete', label: t.header.step5, num: 5 },
+    { key: 'demographics', label: language === 'ko' ? '기본 안내' : 'Guide', num: 1 },
+    { key: 'chat', label: language === 'ko' ? 'AI 대화' : 'AI Chat', num: 2 },
+    { key: 'survey', label: language === 'ko' ? '설문' : 'Survey', num: 3 },
+    { key: 'complete', label: language === 'ko' ? '완료' : 'Done', num: 4 },
   ];
 
   const currentStepIndex = steps.findIndex((s) => s.key === currentStep);
