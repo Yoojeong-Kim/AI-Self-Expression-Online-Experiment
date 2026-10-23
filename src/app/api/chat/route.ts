@@ -97,9 +97,9 @@ Current Topic: ${stageTopicsEn}
           parts: [{ text: m.text }]
         }));
 
-        // Ultra-fast timeout race (hard limit 2.8s) to strictly eliminate response latency
+        // Generous timeout race (8.5s limit) to strictly eliminate response latency
         const timeoutPromise = new Promise<null>((resolve) => 
-          setTimeout(() => resolve(null), 2800)
+          setTimeout(() => resolve(null), 8500)
         );
 
         const generatePromise = ai.models.generateContent({
@@ -133,7 +133,13 @@ Current Topic: ${stageTopicsEn}
       } else if (message.includes('진짜') || message.includes('너 맞아')) {
         fallbackText = '내가 나를 시각적으로 표현한다면 이런 느낌과 분위기일 것 같아서 골라본 내 모습이야! 너가 보기엔 나랑 어울려 보여?';
       } else if (stage === 1 && currentTiming === 'pre') {
-        fallbackText = '그렇게 봐줘서 고마워! 너가 보기에 내 분위기나 스타일 어때 보여?';
+        const preFallbacks = [
+          '그렇게 말해줘서 고마워! 너는 평소에 어떤 스타일이나 분위기 좋아해?',
+          '칭찬 고마워! 친구들한테 사진 보여줄 때마다 좀 쑥스러웠는데 다행이다 ㅎㅎ 너는 주로 어떤 사진 찍는 거 좋아해?',
+          '좋게 봐줘서 기분 좋다! 오늘 날씨랑도 왠지 어울리는 것 같지 않아? 너는 오늘 하루 어떻게 보내고 있어?',
+          '응응, 나랑 잘 어울리는 것 같아? 너는 평소에 옷 입을 때 어떤 스타일에 제일 신경 써?'
+        ];
+        fallbackText = preFallbacks[Math.floor(Math.random() * preFallbacks.length)];
       } else if (stage === 1 || (currentTiming === 'pre' && stage === 2)) {
         fallbackText = '진짜 흥미로운 취미다! 그거 할 때 언제가 제일 재밌어?';
       } else {
