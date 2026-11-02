@@ -15,7 +15,7 @@ interface StepDemographics2Props {
 }
 
 const OCCUPATION_OPTIONS = [
-  { id: 'college', label: '🎓 대학생 (휴학생 포함)' },
+  { id: 'college', label: '🎓 대학(원)생 (휴학생 포함)' },
   { id: 'jobseeker', label: '📝 취업준비생 / 시험준비생' },
   { id: 'worker', label: '💼 직장인 (사회초년생 / 인턴)' },
   { id: 'parttime', label: '☕ 아르바이트 / 프리랜서' },
@@ -23,7 +23,6 @@ const OCCUPATION_OPTIONS = [
 ];
 
 export const StepDemographics2: React.FC<StepDemographics2Props> = ({
-  language,
   onComplete,
 }) => {
   const [gender, setGender] = useState<string>('');
@@ -37,7 +36,7 @@ export const StepDemographics2: React.FC<StepDemographics2Props> = ({
     setErrorMessage('');
 
     if (!gender) {
-      setErrorMessage('AI와의 원활한 대화 및 설정을 위해 성별을 선택해 주세요.');
+      setErrorMessage('AI와의 대화 및 자극물 설정을 위해 성별을 선택해 주세요.');
       return;
     }
 
@@ -54,7 +53,7 @@ export const StepDemographics2: React.FC<StepDemographics2Props> = ({
 
     const finalOccupation = occupation === 'other' 
       ? customOccupation.trim() 
-      : OCCUPATION_OPTIONS.find(o => o.id === occupation)?.label.replace(/^[^\s]+\s/, '') || '대학생';
+      : OCCUPATION_OPTIONS.find(o => o.id === occupation)?.label.replace(/^[^\s]+\s/, '') || '대학(원)생';
 
     onComplete({
       gender,
@@ -77,7 +76,7 @@ export const StepDemographics2: React.FC<StepDemographics2Props> = ({
             참가자 기본 정보 확인
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-2 leading-relaxed">
-            AI 친구가 당신의 일상과 눈높이에 딱 맞춰 대화할 수 있도록<br className="hidden sm:inline" />
+            AI 친구가 당신의 일상과 눈높이에 맞춰 대화할 수 있도록<br className="hidden sm:inline" />
             간단한 기본 정보를 확인합니다.
           </p>
         </div>
@@ -91,7 +90,7 @@ export const StepDemographics2: React.FC<StepDemographics2Props> = ({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 1. 성별 선택 */}
+          {/* 1. 성별 선택 (순수 한국어) */}
           <div className="p-4 sm:p-5 rounded-2xl border border-slate-200/90 bg-slate-50/50 space-y-3">
             <label className="block text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5">
               <User className="w-4 h-4 text-indigo-600" />
@@ -107,7 +106,7 @@ export const StepDemographics2: React.FC<StepDemographics2Props> = ({
                     : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
                 }`}
               >
-                <span>👧 여성 (Female)</span>
+                <span>👧 여성</span>
               </button>
               <button
                 type="button"
@@ -118,7 +117,7 @@ export const StepDemographics2: React.FC<StepDemographics2Props> = ({
                     : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
                 }`}
               >
-                <span>👦 남성 (Male)</span>
+                <span>👦 남성</span>
               </button>
             </div>
           </div>
