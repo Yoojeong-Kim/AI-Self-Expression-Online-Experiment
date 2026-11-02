@@ -94,22 +94,18 @@ export default function Study2Page() {
     assignCondition();
   }, []);
 
-  // 1. 사전 설문 완료 시 (성별, 나이, 직업 확정 -> 곧바로 대화창 진입!)
+  // 1. 사전 설문 완료 시 (성별, 나이 확인 -> 곧바로 대화창 진입!)
   const handleDemographicsComplete = (info: {
     gender: string;
     age: number;
-    occupation: string;
-    occupationDetail?: string;
   }) => {
     setUserAge(info.age);
-    setUserOccupation(info.occupation);
 
     if (participant) {
       const updated: ParticipantInfo = {
         ...participant,
         gender: info.gender,
         birthYear: String(new Date().getFullYear() - info.age),
-        occupation: info.occupation,
       };
       setParticipant(updated);
       participantRef.current = updated;
@@ -119,12 +115,28 @@ export default function Study2Page() {
     setCurrentStep('chat');
   };
 
-  // 2. 대화 완료 시
-  const handleChatFinish = (totalSeconds: number, messages: ChatMessage[]) => {
+  // 2. 대화 완료 시 (채팅 내 1단계 기본 대화에서 입력한 직업·성별·나이 반영)
+  const handleChatFinish = (
+    totalSeconds: number,
+    messages: ChatMessage[],
+    updatedInfo?: { gender: string; age: number; occupation: string }
+  ) => {
     setTotalChatSeconds(totalSeconds);
     setChatMessages(messages);
     totalChatSecondsRef.current = totalSeconds;
     chatMessagesRef.current = messages;
+
+    if (updatedInfo && participantRef.current) {
+      const updated: ParticipantInfo = {
+        ...participantRef.current,
+        gender: updatedInfo.gender || participantRef.current.gender,
+        birthYear: String(new Date().getFullYear() - updatedInfo.age),
+        occupation: updatedInfo.occupation,
+      };
+      setParticipant(updated);
+      participantRef.current = updated;
+    }
+
     setCurrentStep('survey');
   };
 

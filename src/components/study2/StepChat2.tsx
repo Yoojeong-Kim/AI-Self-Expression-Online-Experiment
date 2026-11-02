@@ -12,26 +12,38 @@ interface StepChat2Props {
   timing?: DisclosureTiming;
   userAge?: number;
   userOccupation?: string;
-  onFinishChat: (totalSeconds: number, messages: ChatMessage[]) => void;
+  onFinishChat: (
+    totalSeconds: number,
+    messages: ChatMessage[],
+    updatedInfo?: { gender: string; age: number; occupation: string }
+  ) => void;
 }
 
-// 1단계 일상 에너지 상태 선택지 4종
+// 1단계 기본 대화: 짧은 직업 선택지
+const OCCUPATION_OPTIONS = [
+  '🎓 대학(원)생',
+  '📝 취준생',
+  '💼 직장인',
+  '☕ 알바·프리랜서',
+];
+
+// 일상 에너지 상태 짧은 선택지 4종
 const ENERGY_OPTIONS = [
-  '바쁘게 치열하게 사는 중! 정신없지만 버티는 중이야 🏃',
-  '완전 번아웃/방전... 아무 생각 없이 푹 쉬고 싶어 🪫',
-  '생각과 걱정은 많은데 몸이 안 따라줘서 답답한 상태 🌀',
-  '큰 일 없이 무난하고 잔잔하게 보내고 있어 🌿',
+  '🏃 바쁘고 정신없음',
+  '🪫 완전 방전·번아웃',
+  '🌀 생각만 많고 답답함',
+  '🌿 무난하고 평온함',
 ];
 
-// 2단계 핵심 고민 4대 영역 선택지
+// 핵심 고민 짧은 선택지 4종
 const WORRY_OPTIONS = [
-  '👥 인간관계 / 고립감 (내 진짜 속마음 나눌 사람이 없음)',
-  '📉 진로 / 미래 불안 (남들은 다 앞서가는데 나만 멈춰있는 느낌)',
-  '📚 무기력 / 할 일 미루기 (해야 할 건 아는데 손에 안 잡힘)',
-  '💸 현실적 일상 스트레스 (돈, 체력, 일상 관리의 벅참)',
+  '👥 인간관계·외로움',
+  '📉 진로·미래 불안',
+  '📚 무기력·할 일 미루기',
+  '💸 돈·체력·현실 스트레스',
 ];
 
-// 호칭 정제 함수
+// 호칭 정제 함수 (예: "유정이라고 해봐" -> "유정")
 function cleanNicknameClient(raw: string): string {
   let cleaned = (raw || '').trim();
   cleaned = cleaned.replace(/^(내 이름은|내 별명은|나를|날|그냥)\s*/g, '');
@@ -50,20 +62,35 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   onFinishChat,
 }) => {
   const currentTiming = timing || 'mid';
-  const stimulusImageUrl = getStimulusImageUrl(gender, imageType);
+
+  // Chat-level basic info state (synced with pre-survey defaults, editable during Step 1 basic dialogue)
+  const [chatGender, setChatGender] = useState<string>(gender || 'female');
+  const [chatAge, setChatAge] = useState<number>(userAge || 21);
+  const [ageDraft, setAgeDraft] = useState<string>(userAge ? String(userAge) : '');
+  const [nickname, setNickname] = useState<string>('');
+  const [nicknameDraft, setNicknameDraft] = useState<string>('');
+  const [chatOccupation, setChatOccupation] = useState<string>(userOccupation || '');
+  const [showCustomOccupation, setShowCustomOccupation] = useState<boolean>(false);
+  const [customOccupationDraft, setCustomOccupationDraft] = useState<string>('');
+
+  // Stimulus image uses pre-survey gender (or updated chatGender)
+  const stimulusImageUrl = getStimulusImageUrl(chatGender || gender, imageType);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState<string>('');
-  const [nickname, setNickname] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
 
-  // Interaction Flow State Machine
-  // Pre: 'pre_photo' -> 'pre_photo_chat' -> 'ask_nickname' -> 'select_energy' -> 'chat_energy' -> 'select_worry' -> 'chat_worry' -> 'completed'
-  // Mid: 'ask_nickname' -> 'select_energy' -> 'chat_energy' -> 'select_worry' -> 'chat_worry' -> 'mid_photo_ask' -> 'mid_photo_chat' -> 'completed'
-  const [flowStep, setFlowStep] = useState<string>(
-    currentTiming === 'pre' ? 'pre_photo_chat' : 'ask_nickname'
-  );
+  /**
+   * Flow State Machine:
+   * 1) 1단계 기본 대화 (공통):
+   *    'ask_gender' -> 'ask_age' -> 'ask_nickname' -> 'ask_occupation'
+   * 2) Pre 조건 분기:
+   *    -> 'pre_photo_chat' (사진 대화 2턴) -> 'select_energy' -> 'select_worry' -> 'chat_worry' (5턴) -> 'completed'
+   * 3) Mid 조건 분기:
+   *    -> 'select_energy' -> 'select_worry' -> 'chat_worry' (5턴) -> 'mid_photo_ask' -> 'mid_photo_chat' (2턴) -> 'completed'
+   */
+  const [flowStep, setFlowStep] = useState<string>('ask_gender');
 
   const [selectedEnergy, setSelectedEnergy] = useState<string>('');
   const [selectedWorry, setSelectedWorry] = useState<string>('');
@@ -90,37 +117,35 @@ export const StepChat2: React.FC<StepChat2Props> = ({
         behavior: 'smooth',
       });
     }
-  }, [messages, isLoading, flowStep]);
+  }, [messages, isLoading, flowStep, showCustomOccupation]);
 
-  // Initial Message Setup
+  // Initial Greeting Setup (Pre: 사진 보여주며 가벼운 인사 + 1단계 기본 대화 시작 / Mid: 텍스트 인사 + 1단계 기본 대화 시작)
   useEffect(() => {
     const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const initialPhotoUrl = getStimulusImageUrl(gender, imageType);
 
     if (currentTiming === 'pre') {
-      // PRE 조건: 냅다 사진 공개하고 시작!
       setMessages([
         {
           id: 'pre-init',
           sender: 'ai',
-          text: '안녕! 만나서 반가워 ㅎㅎ 본격적으로 대화하기 전에 내 모습 먼저 보여줄게!\n이건 내 모습이야. 내 모습을 보니 어떻게 생각해? (사진_노출됨)',
+          text: '안녕! 만나서 반가워 ㅎㅎ 먼저 내 모습 보여주면서 인사할게! (사진_노출됨)\n우리 본격적으로 이야기 나누기 전에 서로 기본적인 것부터 알아가 볼까? 먼저 너는 성별이 어떻게 돼?',
           timestamp: nowStr,
-          imageUrl: stimulusImageUrl,
+          imageUrl: initialPhotoUrl,
         },
       ]);
-      setFlowStep('pre_photo_chat');
     } else {
-      // MID 조건: 텍스트 첫인사로 호칭부터 질문!
       setMessages([
         {
           id: 'mid-init',
           sender: 'ai',
-          text: `안녕! 만나서 반가워 ㅎㅎ ${userOccupation} 맞지? 오늘 너랑 편하게 이야기 나누고 싶어.\n내가 널 뭐라고 부르면 제일 편해?`,
+          text: '안녕! 만나서 반가워 ㅎㅎ 오늘 너랑 편하게 이야기 나누고 싶어!\n우리 본격적으로 이야기 나누기 전에 서로 기본적인 것부터 알아가 볼까? 먼저 너는 성별이 어떻게 돼?',
           timestamp: nowStr,
         },
       ]);
-      setFlowStep('ask_nickname');
     }
-  }, [currentTiming, stimulusImageUrl, userOccupation]);
+    setFlowStep('ask_gender');
+  }, [currentTiming, gender, imageType]);
 
   // API Call helper
   const callAI = async (
@@ -139,12 +164,12 @@ export const StepChat2: React.FC<StepChat2Props> = ({
           message: userMsgText,
           stage: stageName,
           turnCount: turnNum,
-          gender,
+          gender: chatGender,
           imageType,
           timing: currentTiming,
           nickname: nickname || '친구',
-          occupation: userOccupation,
-          age: userAge,
+          occupation: chatOccupation || '대학(원)생',
+          age: chatAge,
           energyState: selectedEnergy,
           worryTopic: selectedWorry,
           chatHistory: allHist.map((m) => ({
@@ -169,67 +194,185 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     }
   };
 
-  // 1. 호칭(Nickname) 전송 처리
-  const handleNicknameSubmit = (nameToUse: string) => {
-    const cleaned = cleanNicknameClient(nameToUse);
+  // ============================================================================
+  // [1단계 기본 대화]: 성별 -> 나이 -> 호칭 -> 직업 (모든 단계 되돌리기 지원)
+  // ============================================================================
+
+  // 1-1. 성별 선택
+  const handleGenderSelect = (selectedG: 'female' | 'male') => {
+    setChatGender(selectedG);
+    const label = selectedG === 'female' ? '여성' : '남성';
+    const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const userMsg: ChatMessage = {
+      id: 'u-gender-' + Date.now(),
+      sender: 'user',
+      text: label,
+      timestamp: nowStr,
+    };
+    const aiMsg: ChatMessage = {
+      id: 'ai-ask-age-' + Date.now(),
+      sender: 'ai',
+      text: '반가워 ㅎㅎ 나이는 만으로 몇 살이야?',
+      timestamp: nowStr,
+    };
+
+    setMessages((prev) => [...prev, userMsg, aiMsg]);
+    setFlowStep('ask_age');
+  };
+
+  // 되돌리기: 나이 -> 성별
+  const handleBackToGender = () => {
+    setMessages((prev) => prev.slice(0, -2));
+    setFlowStep('ask_gender');
+  };
+
+  // 1-2. 나이 입력
+  const handleAgeSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const parsed = parseInt(ageDraft.trim(), 10);
+    const validAge = !isNaN(parsed) && parsed >= 15 && parsed <= 40 ? parsed : chatAge || 21;
+    setChatAge(validAge);
+
+    const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const userMsg: ChatMessage = {
+      id: 'u-age-' + Date.now(),
+      sender: 'user',
+      text: `만 ${validAge}살`,
+      timestamp: nowStr,
+    };
+    const aiMsg: ChatMessage = {
+      id: 'ai-ask-nick-' + Date.now(),
+      sender: 'ai',
+      text: `만 ${validAge}살이구나! 우리 편하게 부를 수 있게 네 이름이나 별명 알려줄래?`,
+      timestamp: nowStr,
+    };
+
+    setMessages((prev) => [...prev, userMsg, aiMsg]);
+    setFlowStep('ask_nickname');
+  };
+
+  // 되돌리기: 호칭 -> 나이
+  const handleBackToAge = () => {
+    setMessages((prev) => prev.slice(0, -2));
+    setFlowStep('ask_age');
+  };
+
+  // 1-3. 이름(호칭) 입력
+  const handleNicknameSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const cleaned = cleanNicknameClient(nicknameDraft || nickname || '친구');
     setNickname(cleaned);
+    setNicknameDraft(cleaned);
 
     const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const userMsg: ChatMessage = {
       id: 'u-nick-' + Date.now(),
       sender: 'user',
-      text: `${cleaned}`,
+      text: cleaned,
       timestamp: nowStr,
     };
-
-    // AI의 일상 질문 멘트 (직업 반영)
-    let aiQuestion = '';
-    if (userOccupation.includes('대학') || userOccupation.includes('휴학')) {
-      aiQuestion = `좋아, ${cleaned}아! 요즘 한창 학기 보내느라 바쁠 텐데, 요즘 네 일상 에너지 상태는 솔직히 어때?`;
-    } else if (userOccupation.includes('직장') || userOccupation.includes('인턴')) {
-      aiQuestion = `좋아, ${cleaned}아! 요즘 회사 다니고 일하느라 피곤할 텐데, 요즘 네 일상 에너지 상태는 솔직히 어때?`;
-    } else if (userOccupation.includes('취업') || userOccupation.includes('수험')) {
-      aiQuestion = `좋아, ${cleaned}아! 요즘 취업 준비하고 공부하느라 머리 복잡할 텐데, 요즘 네 일상 에너지 상태는 솔직히 어때?`;
-    } else {
-      aiQuestion = `좋아, ${cleaned}아! 요즘 하루하루 보내면서 네 일상 에너지 상태는 솔직히 어때?`;
-    }
-
     const aiMsg: ChatMessage = {
-      id: 'ai-energy-q-' + Date.now(),
+      id: 'ai-ask-occ-' + Date.now(),
       sender: 'ai',
-      text: aiQuestion,
+      text: `좋아, ${cleaned}아! 반가워 ㅎㅎ 요즘은 주로 뭐 하면서 지내?`,
       timestamp: nowStr,
     };
 
     setMessages((prev) => [...prev, userMsg, aiMsg]);
-    setFlowStep('select_energy');
+    setShowCustomOccupation(false);
+    setFlowStep('ask_occupation');
   };
 
-  // 호칭 재수정 기능 (돌아가기)
-  const handleEditNickname = () => {
+  // 되돌리기: 직업 -> 호칭
+  const handleBackToNickname = () => {
+    setMessages((prev) => prev.slice(0, -2));
+    setShowCustomOccupation(false);
     setFlowStep('ask_nickname');
   };
 
-  // 2. 1단계 일상 에너지 상태 선택 버튼 클릭 처리
+  // 직업에 맞는 일상 컨디션 질문 생성 헬퍼
+  const buildEnergyQuestion = (name: string, occ: string) => {
+    if (occ.includes('대학')) {
+      return ` 요즘 학교 다니고 과제하느라 바쁠 텐데, 하루하루 보내는 네 컨디션은 솔직히 어때?`;
+    } else if (occ.includes('직장')) {
+      return ` 요즘 회사 다니고 일하느라 피곤할 텐데, 하루하루 보내는 네 컨디션은 솔직히 어때?`;
+    } else if (occ.includes('취준')) {
+      return ` 요즘 취업 준비하고 공부하느라 신경 쓸 게 많을 텐데, 요즘 네 컨디션은 솔직히 어때?`;
+    } else {
+      return ` 요즘 하루하루 바쁘게 보내면서 네 일상 컨디션은 솔직히 어때?`;
+    }
+  };
+
+  // 1-4. 직업 선택 완료 -> Pre 조건은 [사진 이야기]로, Mid 조건은 [일상 에너지]로!
+  const handleOccupationSelect = (rawOcc: string) => {
+    const cleanOcc = rawOcc.replace(/^[^\s]+\s/, '').trim();
+    setChatOccupation(cleanOcc);
+
+    const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const userMsg: ChatMessage = {
+      id: 'u-occ-' + Date.now(),
+      sender: 'user',
+      text: cleanOcc,
+      timestamp: nowStr,
+    };
+
+    if (currentTiming === 'pre') {
+      // PRE 조건: 기본 대화 완료 후, 아까 보여준 사진에 대해 이야기하기!
+      const aiPhotoAskMsg: ChatMessage = {
+        id: 'ai-pre-photo-start-' + Date.now(),
+        sender: 'ai',
+        text: `오 ${cleanOcc}이구나! 반가워 ${nickname}아 ㅎㅎ\n우리 이제 서로 기본적인 건 다 알았네! 아까 처음에 인사할 때 보여준 내 사진 봤지? 내 모습이나 스타일 보니 어때 보여?`,
+        timestamp: nowStr,
+      };
+      setMessages((prev) => [...prev, userMsg, aiPhotoAskMsg]);
+      setPhotoFeedbackCount(0);
+      setFlowStep('pre_photo_chat');
+      setTimeout(() => inputRef.current?.focus(), 150);
+    } else {
+      // MID 조건: 곧바로 일상 에너지 질문으로!
+      const aiEnergyMsg: ChatMessage = {
+        id: 'ai-energy-q-' + Date.now(),
+        sender: 'ai',
+        text: `오 ${cleanOcc}이구나! 반가워 ${nickname}아 ㅎㅎ` + buildEnergyQuestion(nickname, cleanOcc),
+        timestamp: nowStr,
+      };
+      setMessages((prev) => [...prev, userMsg, aiEnergyMsg]);
+      setFlowStep('select_energy');
+    }
+  };
+
+  // 되돌리기: 직업 다시 선택
+  const handleBackToOccupation = () => {
+    setMessages((prev) => prev.slice(0, -2));
+    setShowCustomOccupation(false);
+    setFlowStep('ask_occupation');
+  };
+
+  // ============================================================================
+  // [일상 컨디션 & 핵심 고민 선택]
+  // ============================================================================
+
+  // 일상 에너지 상태 선택
   const handleEnergySelect = async (opt: string) => {
-    setSelectedEnergy(opt);
+    const cleanOpt = opt.replace(/^[^\s]+\s/, '').trim();
+    setSelectedEnergy(cleanOpt);
     const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     const userMsg: ChatMessage = {
       id: 'u-energy-' + Date.now(),
       sender: 'user',
-      text: opt,
+      text: cleanOpt,
       timestamp: nowStr,
     };
     setMessages((prev) => [...prev, userMsg]);
 
-    // AI 공감 답변 생성
-    const aiReplyText = await callAI(opt, 'daily_status', 1, [userMsg]);
+    const aiReplyText = await callAI(cleanOpt, 'daily_status', 1, [userMsg]);
 
     const aiMsg: ChatMessage = {
       id: 'ai-energy-rep-' + Date.now(),
       sender: 'ai',
-      text: `${aiReplyText}\n\n사실 남들한텐 다 괜찮은 척해도, 혼자 있을 땐 말 못 할 고민 하나씩 있잖아. 요즘 ${nickname || '너'} 마음을 제일 무겁게 만드는 건 뭐야?`,
+      text: `${aiReplyText}\n\n사실 남들한텐 괜찮은 척해도 혼자 있을 땐 말 못 할 고민이 하나씩 있잖아. 요즘 ${nickname} 마음을 제일 무겁게 만드는 고민은 뭐야?`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
@@ -237,28 +380,27 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     setFlowStep('select_worry');
   };
 
-  // 에너지 선택 되돌리기
+  // 되돌리기: 일상 에너지 다시 선택
   const handleResetEnergy = () => {
-    // 마지막 2개 메시지(유저 선택 + AI 질문) 제거 후 다시 선택 모드로
     setMessages((prev) => prev.slice(0, -2));
     setFlowStep('select_energy');
   };
 
-  // 3. 2단계 핵심 고민 영역 선택 버튼 클릭 처리
+  // 핵심 고민 영역 선택
   const handleWorrySelect = async (worryOpt: string) => {
-    setSelectedWorry(worryOpt);
+    const cleanWorry = worryOpt.replace(/^[^\s]+\s/, '').trim();
+    setSelectedWorry(cleanWorry);
     const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     const userMsg: ChatMessage = {
       id: 'u-worry-' + Date.now(),
       sender: 'user',
-      text: worryOpt,
+      text: cleanWorry,
       timestamp: nowStr,
     };
     setMessages((prev) => [...prev, userMsg]);
 
-    // AI의 첫 번째 깊은 공감 질문
-    const aiReplyText = await callAI(worryOpt, 'deep_worry', 1, [userMsg]);
+    const aiReplyText = await callAI(cleanWorry, 'deep_worry', 1, [userMsg]);
     const aiMsg: ChatMessage = {
       id: 'ai-worry-turn-1-' + Date.now(),
       sender: 'ai',
@@ -272,14 +414,16 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     setTimeout(() => inputRef.current?.focus(), 150);
   };
 
-  // 고민 선택 되돌리기
+  // 되돌리기: 고민 주제 다시 선택
   const handleResetWorry = () => {
     setMessages((prev) => prev.slice(0, -2));
     setFlowStep('select_worry');
     setWorryTurnCount(0);
   };
 
-  // 4. 자유 텍스트 전송 (핑퐁 처리)
+  // ============================================================================
+  // [자유 텍스트 핑퐁]: 사진 이야기(2턴) & 고민 대화(5턴)
+  // ============================================================================
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const trimmed = inputText.trim();
@@ -296,102 +440,104 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     setInputText('');
     setMessages((prev) => [...prev, userMsg]);
 
-    // 분기 A: 사진 피드백 대화 중인 경우 (Pre 조건 초기 또는 Mid 조건 후반)
+    // 분기 A: 사진 이야기 중인 경우 (Pre 기본대화 직후 or Mid 고민대화 직후, 총 2턴)
     if (flowStep === 'pre_photo_chat' || flowStep === 'mid_photo_chat') {
       const nextCnt = photoFeedbackCount + 1;
       setPhotoFeedbackCount(nextCnt);
 
       const aiReply = await callAI(trimmed, 'photo_feedback', nextCnt, [userMsg]);
-      const aiMsg: ChatMessage = {
-        id: 'ai-photo-rep-' + Date.now(),
-        sender: 'ai',
-        text: aiReply,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
 
       if (flowStep === 'pre_photo_chat' && nextCnt >= 2) {
-        // Pre 조건: 사진 피드백 2턴 끝나면 호칭 질문으로 전개!
-        const bridgeMsg: ChatMessage = {
-          id: 'ai-ask-nick-' + Date.now(),
+        // Pre 조건: 사진 이야기 2턴 완료 -> 한 말풍선 안에서 자연스럽게 일상 컨디션 질문으로 연결!
+        const combinedAiMsg: ChatMessage = {
+          id: 'ai-photo-to-energy-' + Date.now(),
           sender: 'ai',
-          text: `사진 좋게 봐줘서 고마워 ㅎㅎ 그나저나 내가 널 뭐라고 부르면 제일 편해?`,
+          text: `${aiReply}\n\n내 모습 좋게 봐줘서 고마워 ㅎㅎ 그나저나 ${nickname}아,${buildEnergyQuestion(nickname, chatOccupation)}`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
-        setMessages((prev) => [...prev, aiMsg, bridgeMsg]);
-        setFlowStep('ask_nickname');
+        setMessages((prev) => [...prev, combinedAiMsg]);
+        setFlowStep('select_energy');
       } else if (flowStep === 'mid_photo_chat' && nextCnt >= 2) {
-        // Mid 조건: 사진 피드백 2턴 끝나면 최종 완료!
-        const completeMsg: ChatMessage = {
-          id: 'ai-complete-' + Date.now(),
+        // Mid 조건: 사진 이야기 2턴 완료 -> 자연스럽게 최종 마무리!
+        const combinedCompleteMsg: ChatMessage = {
+          id: 'ai-complete-mid-' + Date.now(),
           sender: 'ai',
-          text: `오늘 ${nickname} 너랑 이렇게 깊은 이야기 나누고 내 모습도 보여줄 수 있어서 진짜 뜻깊었어 ㅎㅎ\n오늘 나랑 나눈 대화가 어땠는지 솔직한 생각 남겨줄래?`,
+          text: `${aiReply}\n\n오늘 ${nickname} 너랑 깊은 이야기도 나누고 내 모습도 보여줄 수 있어서 진짜 뜻깊었어 ㅎㅎ 오늘 나랑 나눈 대화가 어땠는지 다음 화면에서 솔직하게 남겨줄래?`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
-        setMessages((prev) => [...prev, aiMsg, completeMsg]);
+        setMessages((prev) => [...prev, combinedCompleteMsg]);
         setFlowStep('completed');
       } else {
+        // 1턴째: AI가 사진 소감에 답하고 가벼운 질문 1개를 던짐
+        const aiMsg: ChatMessage = {
+          id: 'ai-photo-rep-' + Date.now(),
+          sender: 'ai',
+          text: aiReply,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
         setMessages((prev) => [...prev, aiMsg]);
+        setTimeout(() => inputRef.current?.focus(), 150);
       }
       return;
     }
 
-    // 분기 B: 2단계 핵심 고민 5턴 핑퐁 중인 경우
+    // 분기 B: 핵심 고민 5턴 핑퐁 중인 경우
     if (flowStep === 'chat_worry') {
       const nextTurn = worryTurnCount + 1;
       setWorryTurnCount(nextTurn);
 
       const aiReply = await callAI(trimmed, 'deep_worry', nextTurn, [userMsg]);
-      const aiMsg: ChatMessage = {
-        id: 'ai-worry-turn-' + nextTurn + '-' + Date.now(),
-        sender: 'ai',
-        text: aiReply,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
 
       if (nextTurn >= 5) {
-        // 5턴 완주!
         if (currentTiming === 'mid') {
-          // MID 조건: 대망의 사진 요청 버튼 브릿지 등장!
-          const askPhotoMsg: ChatMessage = {
-            id: 'ai-ask-photo-trigger-' + Date.now(),
+          // MID 조건: 5턴 완주 후 사진 요청 버튼 브릿지!
+          const aiMsg: ChatMessage = {
+            id: 'ai-worry-turn-5-' + Date.now(),
             sender: 'ai',
-            text: `우리 이렇게 한참 진솔하게 이야기 나누다 보니까 진짜 친해진 것 같아 ㅎㅎ\n아 맞다! 우리 계속 대화했는데, 내가 실제로 어떻게 생겼는지 안 궁금해?`,
+            text: `${aiReply}\n\n우리 이렇게 한참 진솔하게 이야기 나누다 보니까 진짜 친해진 것 같아 ㅎㅎ 아 맞다! 계속 대화만 했는데, 내가 실제로 어떻게 생겼는지 안 궁금해?`,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           };
-          setMessages((prev) => [...prev, aiMsg, askPhotoMsg]);
+          setMessages((prev) => [...prev, aiMsg]);
           setFlowStep('mid_photo_ask');
         } else {
-          // PRE 조건: 사진은 이미 봤으므로 바로 최종 완료!
+          // PRE 조건: 이미 사진 대화를 마쳤으므로 5턴 완주와 함께 최종 완료!
           const completeMsg: ChatMessage = {
             id: 'ai-complete-pre-' + Date.now(),
             sender: 'ai',
-            text: `오늘 ${nickname} 너랑 나눈 대화 진짜 오래 기억에 남을 것 같아.\n오늘 나랑 나눈 대화가 어땠는지 솔직한 생각 남겨줄래?`,
+            text: `${aiReply}\n\n오늘 ${nickname} 너랑 나눈 대화 진짜 오래 기억에 남을 것 같아 ㅎㅎ 오늘 나랑 나눈 대화가 어땠는지 다음 화면에서 솔직하게 남겨줄래?`,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           };
-          setMessages((prev) => [...prev, aiMsg, completeMsg]);
+          setMessages((prev) => [...prev, completeMsg]);
           setFlowStep('completed');
         }
       } else {
+        const aiMsg: ChatMessage = {
+          id: 'ai-worry-turn-' + nextTurn + '-' + Date.now(),
+          sender: 'ai',
+          text: aiReply,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
         setMessages((prev) => [...prev, aiMsg]);
         setTimeout(() => inputRef.current?.focus(), 150);
       }
     }
   };
 
-  // 5. Mid 조건: 사진 요청 버튼 클릭 시 사진 전격 노출!
+  // Mid 조건: 사진 요청 버튼 클릭 시 사진 공개!
   const handleMidPhotoReveal = (userClickText: string) => {
+    const cleanClick = userClickText.replace(/^[^\s]+\s/, '').trim();
     const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const userMsg: ChatMessage = {
       id: 'u-ask-photo-' + Date.now(),
       sender: 'user',
-      text: userClickText,
+      text: cleanClick,
       timestamp: nowStr,
     };
 
     const aiRevealMsg: ChatMessage = {
       id: 'ai-reveal-photo-' + Date.now(),
       sender: 'ai',
-      text: '이건 내 모습이야. 내 모습을 보니 어떻게 생각해? (사진_노출됨)',
+      text: '짜잔! 이건 내 모습이야 ㅎㅎ 내 모습을 보니 어때 보여? (사진_노출됨)',
       timestamp: nowStr,
       imageUrl: stimulusImageUrl,
     };
@@ -417,27 +563,30 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                 <span>AI 친구</span>
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 {nickname && (
-                  <button
-                    onClick={handleEditNickname}
-                    title="호칭 다시 설정하기"
-                    className="ml-1 text-[11px] font-normal text-indigo-600 hover:text-indigo-800 underline flex items-center gap-0.5 cursor-pointer"
-                  >
-                    <Edit2 className="w-3 h-3" />
-                    <span>호칭: {nickname}</span>
-                  </button>
+                  <span className="ml-1 text-[11px] font-normal text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+                    호칭: {nickname}
+                  </span>
                 )}
               </div>
               <div className="text-[11px] text-slate-400">
-                {userOccupation} · 만 {userAge}세 또래 친구
+                {chatOccupation ? `${chatOccupation} · ` : ''}만 {chatAge}세 또래 친구
               </div>
             </div>
           </div>
 
-          {/* Turn Counter Pill */}
+          {/* Photo Chat Turn Counter Pill */}
+          {(flowStep === 'pre_photo_chat' || flowStep === 'mid_photo_chat') && (
+            <div className="px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold flex items-center gap-1.5 animate-in fade-in">
+              <Camera className="w-3.5 h-3.5" />
+              <span>사진 이야기: {photoFeedbackCount} / 2턴</span>
+            </div>
+          )}
+
+          {/* Worry Chat Turn Counter Pill */}
           {flowStep === 'chat_worry' && (
             <div className="px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold flex items-center gap-1.5 animate-in fade-in">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>고민 대화 핑퐁: {worryTurnCount} / 5턴</span>
+              <span>고민 대화: {worryTurnCount} / 5턴</span>
             </div>
           )}
 
@@ -479,7 +628,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                     {/* Image Stimulus in Bubble */}
                     {msg.imageUrl && (
                       <div className="mt-3 pt-2.5 border-t border-slate-100">
-                        <div className="relative w-full max-w-[280px] rounded-xl overflow-hidden shadow-sm border border-slate-200 bg-slate-100">
+                        <div className="relative w-full max-w-[260px] rounded-xl overflow-hidden shadow-sm border border-slate-200 bg-slate-100">
                           <img
                             src={msg.imageUrl}
                             alt="AI 모습"
@@ -511,7 +660,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
               </div>
               <div className="bg-white border border-slate-100 px-3.5 py-2.5 rounded-2xl rounded-bl-xs text-xs text-slate-500 flex items-center gap-2 shadow-xs">
                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping" />
-                <span>AI 친구가 생각하며 답변을 입력하고 있어요...</span>
+                <span>AI 친구가 답장을 입력하고 있어요...</span>
               </div>
             </div>
           )}
@@ -521,64 +670,200 @@ export const StepChat2: React.FC<StepChat2Props> = ({
 
         {/* Dynamic Interactive Bottom Control Area */}
         <div className="p-3.5 border-t border-slate-100 bg-white">
-          {/* 1. 호칭 입력 모드 */}
-          {flowStep === 'ask_nickname' && (
+          {/* 1-1. 성별 선택 */}
+          {flowStep === 'ask_gender' && (
             <div className="space-y-2">
-              <div className="text-xs font-bold text-slate-600 px-1 flex items-center justify-between">
-                <span>💬 AI 친구가 부를 호칭(이름 또는 별명)을 적어주세요:</span>
-                <span className="text-[11px] text-slate-400 font-normal">예: 유정, 민수, 친구야</span>
+              <div className="text-xs font-bold text-slate-600 px-1">
+                <span>💬 성별을 선택해 주세요:</span>
               </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="호칭 입력 (예: 유정)"
-                  maxLength={10}
-                  defaultValue={nickname || ''}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleNicknameSubmit((e.target as HTMLInputElement).value);
-                    }
-                  }}
-                  id="nickname-input"
-                  className="flex-1 px-4 py-2.5 rounded-xl border border-indigo-200 bg-white text-slate-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
-                />
+              <div className="grid grid-cols-2 gap-2.5">
                 <button
                   type="button"
-                  onClick={() => {
-                    const el = document.getElementById('nickname-input') as HTMLInputElement;
-                    handleNicknameSubmit(el?.value || '친구');
-                  }}
-                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm cursor-pointer shadow-xs"
+                  onClick={() => handleGenderSelect('female')}
+                  className="py-3 px-4 rounded-xl border border-indigo-100 bg-indigo-50/70 hover:bg-indigo-600 hover:text-white text-indigo-950 font-bold text-xs sm:text-sm transition-all cursor-pointer"
                 >
-                  확인
+                  👧 여성
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleGenderSelect('male')}
+                  className="py-3 px-4 rounded-xl border border-indigo-100 bg-indigo-50/70 hover:bg-indigo-600 hover:text-white text-indigo-950 font-bold text-xs sm:text-sm transition-all cursor-pointer"
+                >
+                  👦 남성
                 </button>
               </div>
             </div>
           )}
 
-          {/* 2. 일상 에너지 상태 선택지 4종 버튼 */}
+          {/* 1-2. 나이 입력 */}
+          {flowStep === 'ask_age' && (
+            <form onSubmit={handleAgeSubmit} className="space-y-2">
+              <div className="text-xs font-bold text-slate-600 px-1 flex items-center justify-between">
+                <span>💬 만 나이를 입력해 주세요:</span>
+                <button
+                  type="button"
+                  onClick={handleBackToGender}
+                  className="text-[11px] text-slate-400 hover:text-slate-600 flex items-center gap-0.5 cursor-pointer font-normal underline"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  이전으로
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-indigo-200 bg-white">
+                  <span className="text-xs sm:text-sm font-bold text-slate-600">만</span>
+                  <input
+                    type="number"
+                    min={18}
+                    max={30}
+                    value={ageDraft}
+                    onChange={(e) => setAgeDraft(e.target.value)}
+                    placeholder="21"
+                    autoFocus
+                    className="w-16 text-center font-extrabold text-indigo-600 text-sm sm:text-base border-b border-indigo-300 focus:outline-none"
+                  />
+                  <span className="text-xs sm:text-sm font-bold text-slate-600">세</span>
+                </div>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm cursor-pointer shadow-xs"
+                >
+                  확인
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* 1-3. 호칭 입력 */}
+          {flowStep === 'ask_nickname' && (
+            <form onSubmit={handleNicknameSubmit} className="space-y-2">
+              <div className="text-xs font-bold text-slate-600 px-1 flex items-center justify-between">
+                <span>💬 AI 친구가 부를 이름(또는 별명)을 적어주세요:</span>
+                <button
+                  type="button"
+                  onClick={handleBackToAge}
+                  className="text-[11px] text-slate-400 hover:text-slate-600 flex items-center gap-0.5 cursor-pointer font-normal underline"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  이전으로
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="예: 유정"
+                  maxLength={15}
+                  value={nicknameDraft}
+                  onChange={(e) => setNicknameDraft(e.target.value)}
+                  autoFocus
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-indigo-200 bg-white text-slate-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                />
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm cursor-pointer shadow-xs"
+                >
+                  확인
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* 1-4. 직업 선택 */}
+          {flowStep === 'ask_occupation' && (
+            <div className="space-y-2">
+              <div className="text-xs font-bold text-slate-600 px-1 flex items-center justify-between">
+                <span>💬 현재 본인의 직업을 선택해 주세요:</span>
+                <button
+                  type="button"
+                  onClick={handleBackToNickname}
+                  className="text-[11px] text-slate-400 hover:text-slate-600 flex items-center gap-0.5 cursor-pointer font-normal underline"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  이전으로
+                </button>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {OCCUPATION_OPTIONS.map((occ, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleOccupationSelect(occ)}
+                    className="py-2.5 px-3 rounded-xl border border-indigo-100 bg-indigo-50/70 hover:bg-indigo-600 hover:text-white text-indigo-950 font-bold text-xs transition-all cursor-pointer text-center"
+                  >
+                    {occ}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setShowCustomOccupation(true)}
+                  className={`py-2.5 px-3 rounded-xl border font-bold text-xs transition-all cursor-pointer text-center ${
+                    showCustomOccupation
+                      ? 'border-indigo-600 bg-indigo-600 text-white'
+                      : 'border-indigo-100 bg-indigo-50/70 hover:bg-indigo-600 hover:text-white text-indigo-950'
+                  }`}
+                >
+                  ✨ 기타
+                </button>
+              </div>
+
+              {showCustomOccupation && (
+                <div className="flex gap-2 pt-1">
+                  <input
+                    type="text"
+                    placeholder="직업 직접 입력 (예: 대학원생, 휴학생)"
+                    value={customOccupationDraft}
+                    onChange={(e) => setCustomOccupationDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && customOccupationDraft.trim()) {
+                        e.preventDefault();
+                        handleOccupationSelect(customOccupationDraft.trim());
+                      }
+                    }}
+                    autoFocus
+                    className="flex-1 px-3.5 py-2 rounded-xl border border-indigo-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (customOccupationDraft.trim()) {
+                        handleOccupationSelect(customOccupationDraft.trim());
+                      }
+                    }}
+                    className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs cursor-pointer"
+                  >
+                    확인
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 2. 일상 에너지 상태 짧은 선택지 4종 */}
           {flowStep === 'select_energy' && !isLoading && (
             <div className="space-y-2">
               <div className="text-xs font-bold text-indigo-700 px-1 flex items-center justify-between">
                 <span className="flex items-center gap-1">
                   <Sparkles className="w-3.5 h-3.5" />
-                  요즘 본인의 일상 에너지 상태를 선택해 주세요:
+                  요즘 일상 컨디션을 골라주세요:
                 </span>
-                <button
-                  onClick={handleEditNickname}
-                  className="text-[11px] text-slate-400 hover:text-slate-600 flex items-center gap-0.5 cursor-pointer font-normal underline"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  호칭 수정
-                </button>
+                {currentTiming === 'mid' && (
+                  <button
+                    type="button"
+                    onClick={handleBackToOccupation}
+                    className="text-[11px] text-slate-400 hover:text-slate-600 flex items-center gap-0.5 cursor-pointer font-normal underline"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    이전으로
+                  </button>
+                )}
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {ENERGY_OPTIONS.map((opt, i) => (
                   <button
                     key={i}
+                    type="button"
                     onClick={() => handleEnergySelect(opt)}
-                    className="p-3 rounded-xl border border-indigo-100 bg-indigo-50/60 hover:bg-indigo-600 hover:text-white text-indigo-950 font-medium text-xs text-left transition-all cursor-pointer shadow-2xs hover:shadow-sm"
+                    className="p-2.5 sm:p-3 rounded-xl border border-indigo-100 bg-indigo-50/60 hover:bg-indigo-600 hover:text-white text-indigo-950 font-bold text-xs text-center transition-all cursor-pointer shadow-2xs"
                   >
                     {opt}
                   </button>
@@ -587,15 +872,16 @@ export const StepChat2: React.FC<StepChat2Props> = ({
             </div>
           )}
 
-          {/* 3. 핵심 고민 영역 선택지 4종 버튼 */}
+          {/* 3. 핵심 고민 영역 짧은 선택지 4종 */}
           {flowStep === 'select_worry' && !isLoading && (
             <div className="space-y-2">
               <div className="text-xs font-bold text-indigo-700 px-1 flex items-center justify-between">
                 <span className="flex items-center gap-1">
                   <Sparkles className="w-3.5 h-3.5" />
-                  요즘 가장 마음이 쓰이는 고민거리를 하나 골라주세요:
+                  요즘 가장 신경 쓰이는 고민은 무엇인가요?
                 </span>
                 <button
+                  type="button"
                   onClick={handleResetEnergy}
                   className="text-[11px] text-slate-400 hover:text-slate-600 flex items-center gap-0.5 cursor-pointer font-normal underline"
                 >
@@ -603,12 +889,13 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                   이전 선택 다시하기
                 </button>
               </div>
-              <div className="grid grid-cols-1 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {WORRY_OPTIONS.map((opt, i) => (
                   <button
                     key={i}
+                    type="button"
                     onClick={() => handleWorrySelect(opt)}
-                    className="p-3 rounded-xl border border-indigo-100 bg-indigo-50/60 hover:bg-indigo-600 hover:text-white text-indigo-950 font-medium text-xs sm:text-sm text-left transition-all cursor-pointer shadow-2xs hover:shadow-sm"
+                    className="p-2.5 sm:p-3 rounded-xl border border-indigo-100 bg-indigo-50/60 hover:bg-indigo-600 hover:text-white text-indigo-950 font-bold text-xs text-center transition-all cursor-pointer shadow-2xs"
                   >
                     {opt}
                   </button>
@@ -617,31 +904,33 @@ export const StepChat2: React.FC<StepChat2Props> = ({
             </div>
           )}
 
-          {/* 4. Mid 조건: 사진 요청 버튼 2종 */}
+          {/* 4. Mid 조건: 사진 요청 짧은 버튼 2종 */}
           {flowStep === 'mid_photo_ask' && !isLoading && (
             <div className="space-y-2">
               <div className="text-xs font-bold text-indigo-700 px-1 flex items-center gap-1">
                 <Camera className="w-4 h-4 text-indigo-600" />
-                <span>AI 친구에게 답변을 선택해 주세요:</span>
+                <span>AI 친구에게 답장을 선택해 주세요:</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-2 gap-2.5">
                 <button
-                  onClick={() => handleMidPhotoReveal('응 완전 궁금해! 너 어떻게 생겼어? 📸')}
-                  className="p-3.5 rounded-xl border-2 border-indigo-500 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-900 font-bold text-xs sm:text-sm text-center transition-all cursor-pointer shadow-sm hover:shadow-md"
+                  type="button"
+                  onClick={() => handleMidPhotoReveal('📸 응 궁금해! 보여줘')}
+                  className="p-3 rounded-xl border-2 border-indigo-500 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-900 font-bold text-xs sm:text-sm text-center transition-all cursor-pointer shadow-xs"
                 >
-                  📸 응 완전 궁금해! 너 어떻게 생겼어?
+                  📸 응 궁금해! 보여줘
                 </button>
                 <button
-                  onClick={() => handleMidPhotoReveal('웅 보여줘! 너 분위기 궁금했어 ㅎㅎ')}
-                  className="p-3.5 rounded-xl border-2 border-indigo-500 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-900 font-bold text-xs sm:text-sm text-center transition-all cursor-pointer shadow-sm hover:shadow-md"
+                  type="button"
+                  onClick={() => handleMidPhotoReveal('✨ 오 어떻게 생겼어?')}
+                  className="p-3 rounded-xl border-2 border-indigo-500 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-900 font-bold text-xs sm:text-sm text-center transition-all cursor-pointer shadow-xs"
                 >
-                  ✨ 웅 보여줘! 너 분위기 궁금했어 ㅎㅎ
+                  ✨ 오 어떻게 생겼어?
                 </button>
               </div>
             </div>
           )}
 
-          {/* 5. 자유 텍스트 타이핑 모드 (핑퐁 단계) */}
+          {/* 5. 자유 텍스트 타이핑 모드 (사진 이야기 2턴 & 고민 대화 5턴) */}
           {(flowStep === 'pre_photo_chat' || flowStep === 'chat_worry' || flowStep === 'mid_photo_chat') && (
             <form onSubmit={handleSendMessage} className="space-y-1.5">
               <div className="flex gap-2">
@@ -652,8 +941,8 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder={
                     flowStep === 'pre_photo_chat' || flowStep === 'mid_photo_chat'
-                      ? '사진이나 스타일에 대해 솔직하게 이야기해 보세요...'
-                      : '고민에 대해 자유롭게 이야기해 보세요 (Enter를 누르면 전송됩니다)...'
+                      ? 'AI 친구의 사진이나 분위기에 대해 편하게 말해 보세요...'
+                      : '고민에 대해 자유롭게 이야기해 보세요 (Enter로 전송)...'
                   }
                   disabled={isLoading}
                   className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -668,8 +957,22 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                 </button>
               </div>
 
+              {/* 사진 이야기 시작 직후(0턴)에는 직업 선택으로 되돌아가기 가능 */}
+              {flowStep === 'pre_photo_chat' && photoFeedbackCount === 0 && !isLoading && (
+                <div className="flex justify-end pr-1">
+                  <button
+                    type="button"
+                    onClick={handleBackToOccupation}
+                    className="text-[11px] text-slate-400 hover:text-slate-600 flex items-center gap-0.5 cursor-pointer underline"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    직업 다시 선택하기
+                  </button>
+                </div>
+              )}
+
               {/* 고민 대화 1턴째일 때 주제 다시 선택하기 버튼 제공 */}
-              {flowStep === 'chat_worry' && worryTurnCount <= 1 && (
+              {flowStep === 'chat_worry' && worryTurnCount <= 1 && !isLoading && (
                 <div className="flex justify-end pr-1">
                   <button
                     type="button"
@@ -689,7 +992,13 @@ export const StepChat2: React.FC<StepChat2Props> = ({
             <div className="pt-1">
               <button
                 type="button"
-                onClick={() => onFinishChat(elapsedSeconds, messages)}
+                onClick={() =>
+                  onFinishChat(elapsedSeconds, messages, {
+                    gender: chatGender,
+                    age: chatAge,
+                    occupation: chatOccupation || '대학(원)생',
+                  })
+                }
                 className="w-full py-3.5 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg cursor-pointer animate-bounce"
               >
                 <span>대화 완료! 다음 설문으로 이동하기</span>
