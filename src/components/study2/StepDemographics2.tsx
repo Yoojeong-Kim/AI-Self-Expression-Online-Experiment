@@ -12,13 +12,11 @@ interface StepDemographics2Props {
   }) => void;
 }
 
-const AGE_OPTIONS = [19, 20, 21, 22, 23, 24];
-
 export const StepDemographics2: React.FC<StepDemographics2Props> = ({
   onComplete,
 }) => {
   const [gender, setGender] = useState<string>('');
-  const [selectedAge, setSelectedAge] = useState<number | null>(null);
+  const [ageInput, setAgeInput] = useState<string>('21');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -30,14 +28,15 @@ export const StepDemographics2: React.FC<StepDemographics2Props> = ({
       return;
     }
 
-    if (!selectedAge || !AGE_OPTIONS.includes(selectedAge)) {
-      setErrorMessage('만 나이를 선택해 주세요 (만 19세 ~ 24세).');
+    const parsedAge = parseInt(ageInput.trim(), 10);
+    if (isNaN(parsedAge) || parsedAge < 19 || parsedAge > 24) {
+      setErrorMessage('본 연구는 만 19세 ~ 24세만 참여 가능합니다. (19~24 사이로 선택해 주세요)');
       return;
     }
 
     onComplete({
       gender,
-      age: selectedAge,
+      age: parsedAge,
     });
   };
 
@@ -96,27 +95,41 @@ export const StepDemographics2: React.FC<StepDemographics2Props> = ({
             </div>
           </div>
 
-          {/* 2. 만 나이 선택 (만 19~24세 제한) */}
+          {/* 2. 만 나이 입력 (19~24 범위 제한, 상하 화살표 조절) */}
           <div className="p-4 sm:p-5 rounded-2xl border border-slate-200/90 bg-slate-50/50 space-y-3">
             <label className="block text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5">
               <Calendar className="w-4 h-4 text-indigo-600" />
               <span>2. 귀하의 만 나이를 선택해 주세요 (만 19~24세).</span>
             </label>
-            <div className="grid grid-cols-3 gap-2.5">
-              {AGE_OPTIONS.map((age) => (
-                <button
-                  key={age}
-                  type="button"
-                  onClick={() => setSelectedAge(age)}
-                  className={`py-3 px-3 rounded-xl font-bold text-xs sm:text-sm border transition-all cursor-pointer ${
-                    selectedAge === age
-                      ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
-                  }`}
-                >
-                  만 {age}세
-                </button>
-              ))}
+            <div className="flex items-center justify-center gap-3 py-2.5 bg-white rounded-xl border border-slate-200 px-4">
+              <span className="text-sm sm:text-base font-bold text-slate-700">만</span>
+              <input
+                type="number"
+                min={19}
+                max={24}
+                step={1}
+                value={ageInput}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '') {
+                    setAgeInput('');
+                    return;
+                  }
+                  const num = parseInt(val, 10);
+                  if (!isNaN(num)) {
+                    if (num > 24) setAgeInput('24');
+                    else if (num < 19 && val.length >= 2) setAgeInput('19');
+                    else setAgeInput(val);
+                  }
+                }}
+                onBlur={() => {
+                  const num = parseInt(ageInput, 10);
+                  if (isNaN(num) || num < 19) setAgeInput('19');
+                  else if (num > 24) setAgeInput('24');
+                }}
+                className="w-20 text-center text-lg sm:text-xl font-extrabold text-indigo-600 border-b-2 border-indigo-400 focus:border-indigo-600 focus:outline-none py-1 bg-transparent"
+              />
+              <span className="text-sm sm:text-base font-bold text-slate-700">세</span>
             </div>
           </div>
 
