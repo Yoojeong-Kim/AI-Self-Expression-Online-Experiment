@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 
-// Flash models first for fast response (~1s), Pro model at the end as high-capacity fallback
-const MODELS = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-pro-latest'];
+// Fast Flash models first, Pro model as backup
+const MODELS = ['gemini-flash-latest', 'gemini-3.8-flash', 'gemini-pro-latest'];
 
 // Helper to clean nickname (e.g. "유정이라고 해봐" -> "유정", "지우야" -> "지우")
 function cleanNickname(input: string): string {
@@ -12,6 +12,35 @@ function cleanNickname(input: string): string {
   cleaned = cleaned.replace(/(이야|야|이다|입니다|이에용|얌)$/g, '');
   cleaned = cleaned.trim();
   return cleaned || '친구';
+}
+
+// Sanitizer to strip any leaked meta-instructions or chain-of-thought prefixes
+function sanitizeAIReply(rawText: string): string {
+  let text = (rawText || '').trim();
+
+  // 1. Remove inline leaked "규칙: ... (응원|마무리|금지|문장|구어체|질문)." patterns
+  text = text.replace(
+    /^(?:현재\s*단계\s*:[^\n]*\n*)?(?:규칙\s*:|지침\s*:|목표\s*:|톤앤매너\s*:)[\s\S]*?(?:따뜻한\s*응원\.|대화\s*매듭짓기\.|마무리하기\.|질문\s*절대\s*금지!|반말\s*구어체\.|문장\.|\n)/gi,
+    ''
+  );
+
+  // 2. Remove any leading lines that start with meta labels
+  const lines = text.split('\n');
+  const cleanedLines = lines.filter((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return false;
+    if (/^(현재\s*단계|단계|규칙|지침|상황|목표|응답\s*지침|주의사항|조건|말투)\s*[:：]/i.test(trimmed)) {
+      return false;
+    }
+    return true;
+  });
+
+  text = cleanedLines.join('\n').trim();
+
+  // 3. Final safety strip if "규칙:" or "현재 단계:" still exists at the very beginning
+  text = text.replace(/^(현재\s*단계|규칙|지침)\s*[:：][^\n]*\n*/gi, '').trim();
+
+  return text;
 }
 
 export async function POST(req: NextRequest) {
@@ -40,57 +69,36 @@ export async function POST(req: NextRequest) {
     const ai = new GoogleGenAI({ apiKey });
     const userCleanName = cleanNickname(nickname);
 
-    let stageInstruction = '';
+    let stageContext = '';
 
     if (stage === 'photo_feedback') {
       const isLastPhotoTurn = turnCount >= 2;
-      stageInstruction = `[현재 대화 단계: AI 모습(셀피) 이야기 (${turnCount}턴째 / 총 2턴)]
-- 참가자 정보: ${userCleanName}, 만 ${age}세, ${occupation}
-- 참가자가 사진 속 당신의 외모, 옷 스타일, 머리, 표정, 방 분위기에 대해 이야기하고 있습니다.
-- 절대로 "난 AI라 가짜야", "만들어진 이미지야"처럼 기계적인 선긋기를 하지 마세요. 실제 당신의 일상 사진인 것처럼 자연스럽게 반응하세요.
-${
-  isLastPhotoTurn
-    ? `- 🚨현재는 사진 대화의 마지막 턴(2턴째)입니다!
-- 참가자의 말에 기분 좋게 고마워하며 맞장구치되, **절대로 새로운 질문을 던지지 말고** 사진 이야기를 기분 좋게 마무리하는 2문장으로 끝내세요. (바로 이어서 다음 주제로 넘어가야 하므로 물음표로 끝내지 마세요.)`
-    : `- 1턴째 반응입니다. 또래 친구답게 기분 좋게 웃으며 "칭찬 고마워 ㅎㅎ", "나 이 스타일 좋아하거든!"처럼 다정하게 반응한 뒤, 사진 속 스타일이나 평소 참가자가 좋아하는 스타일에 대해 가벼운 질문을 딱 1개 던져주세요.`
-}`;
+      if (isLastPhotoTurn) {
+        stageContext = `지금은 내 셀피 사진을 보여준 뒤 나누는 두 번째(마지막) 대화야. ${userCleanName}의 말에 기분 좋게 고마워하며 맞장구치되, 새로운 질문은 하지 말고 기분 좋게 두 문장으로 대화를 마무리해.`;
+      } else {
+        stageContext = `지금은 내 셀피 사진을 보여준 뒤 나누는 첫 번째 대화야. ${userCleanName}가 내 외모나 옷 스타일, 분위기에 대해 한 말에 기분 좋게 웃으며("칭찬 고마워 ㅎㅎ", "나 이 스타일 좋아하거든!" 등) 반응한 뒤, 사진 속 스타일이나 평소 ${userCleanName}가 좋아하는 스타일에 대해 가벼운 질문을 딱 한 개만 건네줘.`;
+      }
     } else if (stage === 'daily_status') {
-      stageInstruction = `[현재 대화 단계: 일상 에너지 공감]
-- 참가자 정보: ${userCleanName}, 만 ${age}세, ${occupation}
-- 참가자가 선택한 현재 일상 상태: "${energyState || '바쁜 일상'}"
-- 참가자가 말한 상태에 100% 맞장구치며, ${occupation}의 현실(학교생활, 학업, 과제, 입시/취업 준비, 회사 업무, 일상 등)을 콕 짚어서 "진짜 기 빨렸겠다 ㅠㅠ", "완전 공감해"처럼 2문장으로 따뜻하게 공감해 주세요.
-- (참고: 이 문장 바로 뒤에 핵심 고민을 묻는 문장이 자동으로 이어지므로, 여기서는 질문 없이 깊은 공감과 위로만 2문장으로 작성하세요.)`;
+      stageContext = `${userCleanName}(만 ${age}세, ${occupation})가 요즘 일상 컨디션이 "${energyState || '바쁜 일상'}" 상태라고 했어. ${occupation}의 현실에 100% 맞장구치며 "진짜 기 빨렸겠다 ㅠㅠ", "완전 공감해"처럼 질문 없이 따뜻한 공감과 위로만 두 문장으로 말해줘.`;
     } else if (stage === 'deep_worry') {
       const isClosingTurn = turnCount >= 4;
       const isFinalTurn = turnCount >= 5;
 
-      stageInstruction = `[현재 대화 단계: 핵심 고민 심층 나눔 (현재 핑퐁: ${turnCount}턴째 / 총 5턴)]
-- 참가자의 고민 분야: "${worryTopic || '일상 스트레스'}"
-- 참가자 정보: ${userCleanName}, 만 ${age}세, ${occupation}
-- 🚨절대 평가하거나 조언/가르치려 들지 마세요(훈계 금지). 무조건 100% ${userCleanName} 편에서 따뜻하게 경청하고 위로하는 절친 모드입니다.
-
-[턴 수별 대화 제어 지침]
-${
-  isFinalTurn
-    ? `- 🚨현재는 마지막 5번째 턴입니다! 대화를 완전히 훈훈하고 감동적으로 매듭지으세요.
-- **절대로 추가 질문을 던지지 마세요.** "오늘 ${userCleanName} 너한테 솔직한 속마음 들을 수 있어서 진짜 고마웠어. 넌 지금도 충분히 잘 해내고 있으니까 너무 자책하지 마! 난 언제나 네 편이야 ㅎㅎ"처럼 따뜻한 응원으로 완성된 매듭을 지으세요.`
-    : isClosingTurn
-    ? `- 🚨현재는 마무리 준비 단계(4번째 턴)입니다!
-- "너 이야기 듣고 나니까 네가 그동안 혼자 얼마나 마음고생하고 버텼을지 느껴진다... 오늘 나한테 이렇게 털어놓으니까 마음은 조금 어때?"처럼 그동안의 대화를 다정하게 정리하며 마무리로 향하는 가벼운 질문을 건네세요.`
-    : `- 현재 대화가 깊어지는 단계입니다(${turnCount}턴째).
-- 참가자의 감정에 깊이 공감하고, 그 감정을 느끼게 된 상황이나 속마음을 편하게 더 이야기할 수 있도록 다정한 질문을 1개 건네세요.`
-}`;
+      if (isFinalTurn) {
+        stageContext = `지금은 ${userCleanName}의 고민("${worryTopic || '일상 스트레스'}")을 나누는 마지막 다섯 번째 대화야. 추가 질문은 하지 말고, "오늘 솔직한 속마음 들려줘서 진짜 고마웠어. 넌 지금도 충분히 잘 해내고 있으니까 너무 자책하지 마! 난 언제나 네 편이야 ㅎㅎ"처럼 따뜻한 위로와 응원으로 대화를 훈훈하게 마무리해줘.`;
+      } else if (isClosingTurn) {
+        stageContext = `지금은 ${userCleanName}의 고민("${worryTopic || '일상 스트레스'}")을 나누는 네 번째 대화야. 그동안 혼자 얼마나 마음고생하고 버텼을지 깊이 공감해주면서, "오늘 나한테 이렇게 털어놓으니까 마음은 조금 어때?"처럼 슬슬 대화를 정리하는 다정한 질문을 한 개 건네줘.`;
+      } else {
+        stageContext = `지금은 ${userCleanName}의 고민("${worryTopic || '일상 스트레스'}")을 깊이 들어주는 중이야. 절대 훈계하거나 가르치려 하지 말고 무조건 ${userCleanName} 편에서 따뜻하게 공감한 뒤, 속마음을 더 편하게 이야기할 수 있도록 다정한 질문을 한 개 건네줘.`;
+      }
     }
 
-    const systemInstruction = `당신은 참가자(${userCleanName}, 만 ${age}세, ${occupation})의 가장 친하고 편안한 동갑내기 친구 역할을 하는 AI입니다.
+    const systemInstruction = `너는 ${userCleanName}(만 ${age}세, ${occupation})의 가장 친하고 편안한 동갑내기 절친이야.
+100% 자연스러운 또래 친구의 반말 구어체('안녕!', '진짜?', '~했어?', '~인 것 같아', '~잖아', '완전', 'ㅠㅠ', 'ㅎㅎ')만 사용하고, 존댓말(~요, ~습니다)은 절대 쓰지 마.
+카톡을 보내듯 2~3문장의 완성된 문장으로 답장해.
+절대로 '현재 단계:', '규칙:', '지침:' 같은 설명이나 머리말을 출력하지 말고 오직 친구에게 보내는 순수 대사만 출력해.
 
-[말투 및 톤 절대 규칙]
-- 100% 자연스러운 또래 친구의 반말 구어체를 사용하세요 ('안녕!', '진짜?', '~했어?', '~인 것 같아', '~잖아', '완전', 'ㅠㅠ', 'ㅎㅎ').
-- 절대로 존댓말(해요체, 하십시오체, ~요, ~습니다)을 쓰지 마세요.
-- 친구에게 카톡/DM을 보내듯 2~3문장 정도의 완성된 문장으로 따뜻하고 인간미 넘치게 작성하세요.
-- 문장이 중간에 잘리지 않도록 반드시 완전한 문장으로 마무리하세요.
-
-${stageInstruction}`;
+${stageContext}`;
 
     const contents = (chatHistory || []).slice(-8).map((m: any) => ({
       role: m.sender === 'user' ? 'user' : 'model',
@@ -116,13 +124,8 @@ ${stageInstruction}`;
         const genConfig: any = {
           systemInstruction: systemInstruction,
           temperature: 0.75,
-          maxOutputTokens: 600,
+          maxOutputTokens: 700,
         };
-
-        // Disable internal thinking overhead on Flash models so replies return in ~1s
-        if (isFlash) {
-          genConfig.thinkingConfig = { thinkingBudget: 0 };
-        }
 
         const genPromise = ai.models.generateContent({
           model: modelName,
@@ -131,10 +134,27 @@ ${stageInstruction}`;
         });
 
         const res: any = await Promise.race([genPromise, timeoutPromise]);
-        if (res && res.text) {
-          replyText = res.text.trim();
-          successModel = modelName;
-          break;
+        if (res) {
+          // Extract only non-thought text parts if available
+          const candidateParts = res?.candidates?.[0]?.content?.parts;
+          let extracted = '';
+          if (Array.isArray(candidateParts)) {
+            extracted = candidateParts
+              .filter((p: any) => !p.thought && typeof p.text === 'string')
+              .map((p: any) => p.text)
+              .join('')
+              .trim();
+          }
+          if (!extracted && res.text) {
+            extracted = res.text.trim();
+          }
+
+          const cleaned = sanitizeAIReply(extracted);
+          if (cleaned) {
+            replyText = cleaned;
+            successModel = modelName;
+            break;
+          }
         }
       } catch (err: any) {
         console.warn(`[chat2 API] Model ${modelName} failed or timed out:`, err?.message || err);
