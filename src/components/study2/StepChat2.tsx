@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Language, ImageType, DisclosureTiming, ChatMessage } from '@/types/experiment';
 import { getStimulusImageUrl } from '@/data/stimuli';
-import { Send, Bot, User as UserIcon, ArrowRight, CheckCircle2, Sparkles, Camera, RotateCcw } from 'lucide-react';
+import { ArrowUp, ArrowRight, CheckCircle2, RotateCcw, ChevronDown, PanelLeft } from 'lucide-react';
 
 interface StepChat2Props {
   language: Language;
@@ -18,6 +18,22 @@ interface StepChat2Props {
     updatedInfo?: { gender: string; age: number; occupation: string }
   ) => void;
 }
+
+// ChatGPT-style OpenAI Knot / Sparkle Emblem SVG
+const ChatGPTIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.75"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M12 2a4.5 4.5 0 0 0-3.89 2.25L4.22 11a4.5 4.5 0 0 0 0 4.5l3.89 6.75a4.5 4.5 0 0 0 7.78 0l3.89-6.75a4.5 4.5 0 0 0 0-4.5L15.89 4.25A4.5 4.5 0 0 0 12 2Z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
 
 // 1단계 기본 대화: 직업 선택지 5종 (+ 기타 직접 입력 = 총 6개)
 const OCCUPATION_OPTIONS = [
@@ -83,6 +99,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
       setAgeDraft(String(userAge));
     }
   }, [gender, userAge]);
+
   const [nickname, setNickname] = useState<string>('');
   const [nicknameDraft, setNicknameDraft] = useState<string>('');
   const [chatOccupation, setChatOccupation] = useState<string>(userOccupation || '');
@@ -143,7 +160,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     }
   }, [messages, isLoading, flowStep, showCustomOccupation, showCustomEnergy, showCustomWorry]);
 
-  // Initial Greeting Setup (Pre: 사진 보여주며 가벼운 인사 + 1단계 기본 대화 시작 / Mid: 텍스트 인사 + 1단계 기본 대화 시작)
+  // Initial Greeting Setup
   useEffect(() => {
     const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const initialPhotoUrl = getStimulusImageUrl(gender, imageType);
@@ -384,7 +401,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   // [일상 컨디션 & 핵심 고민 선택] (모두 총 6개 버튼: 5개 기본 + 1개 기타 직접 입력)
   // ============================================================================
 
-  // 일상 에너지 상태 선택 (순수 텍스트 전달로 이모지 깨짐 원천 차단)
+  // 일상 에너지 상태 선택
   const handleEnergySelect = async (cleanOptText: string) => {
     const cleanOpt = cleanOptText.trim();
     setSelectedEnergy(cleanOpt);
@@ -420,7 +437,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     setFlowStep('select_energy');
   };
 
-  // 핵심 고민 영역 선택 (순수 텍스트 전달로 이모지 깨짐 원천 차단)
+  // 핵심 고민 영역 선택
   const handleWorrySelect = async (cleanWorryText: string) => {
     const cleanWorry = cleanWorryText.trim();
     setSelectedWorry(cleanWorry);
@@ -585,118 +602,112 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-5 px-3 sm:px-4">
-      {/* Messenger Container */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-md flex flex-col h-[660px] overflow-hidden">
-        {/* Top Header Bar */}
-        <div className="bg-slate-50 border-b border-slate-100 px-5 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-              <Bot className="w-5 h-5" />
+    <div className="max-w-3xl mx-auto py-2 sm:py-4 px-2 sm:px-4">
+      {/* ChatGPT Style Main Container */}
+      <div className="bg-white rounded-2xl border border-neutral-200/90 shadow-xs flex flex-col h-[680px] overflow-hidden text-[#0d0d0d]">
+        {/* ChatGPT Minimalist Top Header Bar */}
+        <div className="bg-white border-b border-neutral-100 px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg text-neutral-500 hover:bg-neutral-100 transition-colors">
+              <PanelLeft className="w-4 h-4" />
             </div>
-            <div>
-              <div className="font-bold text-sm text-slate-800 flex items-center gap-1.5">
-                <span>AI 친구</span>
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                {nickname && (
-                  <span className="ml-1 text-[11px] font-normal text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
-                    호칭: {nickname}
-                  </span>
-                )}
-              </div>
-              <div className="text-[11px] text-slate-400">
-                {chatOccupation ? `${chatOccupation} · ` : ''}만 {chatAge}세 또래 친구
-              </div>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-neutral-100 transition-colors cursor-default">
+              <span className="font-semibold text-[15px] tracking-tight text-[#0d0d0d]">
+                ChatGPT
+              </span>
+              <span className="text-xs font-medium text-neutral-400">4o</span>
+              <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
             </div>
+            {nickname && (
+              <span className="text-[11px] font-medium text-neutral-600 bg-[#f4f4f4] px-2.5 py-0.5 rounded-full">
+                {nickname}님과 대화 중
+              </span>
+            )}
           </div>
 
-          {/* Photo Chat Turn Counter Pill */}
+          {/* Monochrome Turn Counter Pill */}
           {(flowStep === 'pre_photo_chat' || flowStep === 'mid_photo_chat') && (
-            <div className="px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold flex items-center gap-1.5 animate-in fade-in">
-              <Camera className="w-3.5 h-3.5" />
-              <span>사진 이야기: {photoFeedbackCount} / 2턴</span>
+            <div className="px-3 py-1 rounded-full bg-[#f4f4f4] border border-neutral-200 text-[#0d0d0d] text-xs font-semibold flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#0d0d0d]" />
+              <span>사진 대화 {photoFeedbackCount} / 2</span>
             </div>
           )}
 
-          {/* Worry Chat Turn Counter Pill */}
           {flowStep === 'chat_worry' && (
-            <div className="px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold flex items-center gap-1.5 animate-in fade-in">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>고민 대화: {worryTurnCount} / 5턴</span>
+            <div className="px-3 py-1 rounded-full bg-[#f4f4f4] border border-neutral-200 text-[#0d0d0d] text-xs font-semibold flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#0d0d0d]" />
+              <span>대화 진행 {worryTurnCount} / 5</span>
             </div>
           )}
 
           {flowStep === 'completed' && (
-            <div className="px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold flex items-center gap-1">
+            <div className="px-3 py-1 rounded-full bg-neutral-900 text-white text-xs font-semibold flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>대화 완료</span>
             </div>
           )}
         </div>
 
-        {/* Message Stream */}
-        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-slate-50/30">
+        {/* ChatGPT Message Stream */}
+        <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 space-y-6 bg-white">
           {messages.map((msg) => {
             const isUser = msg.sender === 'user';
             const cleanText = msg.text.replace('(사진_노출됨)', '').trim();
 
+            if (isUser) {
+              // ChatGPT User Bubble: Right-aligned soft #f4f4f4 pill, no avatar
+              return (
+                <div
+                  key={msg.id}
+                  className="flex justify-end animate-in fade-in slide-in-from-bottom-1 duration-150"
+                >
+                  <div className="max-w-[80%] sm:max-w-[70%] bg-[#f4f4f4] text-[#0d0d0d] px-4 py-2.5 rounded-3xl text-sm sm:text-[15px] leading-relaxed">
+                    <p className="whitespace-pre-wrap">{cleanText}</p>
+                  </div>
+                </div>
+              );
+            }
+
+            // ChatGPT AI Message: Left-aligned circular emblem + unboxed clean text on white canvas
             return (
               <div
                 key={msg.id}
-                className={`flex gap-2.5 ${isUser ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-1 duration-200`}
+                className="flex gap-3.5 justify-start items-start animate-in fade-in duration-150"
               >
-                {!isUser && (
-                  <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 text-xs shadow-xs mt-0.5">
-                    <Bot className="w-4 h-4" />
-                  </div>
-                )}
-
-                <div className="max-w-[85%] sm:max-w-[72%] space-y-1">
-                  <div
-                    className={`p-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed ${
-                      isUser
-                        ? 'bg-indigo-600 text-white rounded-br-xs shadow-xs'
-                        : 'bg-white text-slate-800 rounded-bl-xs border border-slate-100 shadow-xs'
-                    }`}
-                  >
-                    <p className="whitespace-pre-wrap">{cleanText}</p>
-
-                    {/* Image Stimulus in Bubble */}
-                    {msg.imageUrl && (
-                      <div className="mt-3 pt-2.5 border-t border-slate-100">
-                        <div className="relative w-full max-w-[260px] rounded-xl overflow-hidden shadow-sm border border-slate-200 bg-slate-100">
-                          <img
-                            src={msg.imageUrl}
-                            alt="AI 모습"
-                            className="w-full h-auto object-cover block"
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className={`text-[10px] text-slate-400 px-1 ${isUser ? 'text-right' : 'text-left'}`}>
-                    {msg.timestamp}
-                  </div>
+                <div className="w-7 h-7 rounded-full border border-neutral-200 bg-white text-[#0d0d0d] flex items-center justify-center flex-shrink-0 mt-0.5 shadow-2xs">
+                  <ChatGPTIcon className="w-4 h-4" />
                 </div>
 
-                {isUser && (
-                  <div className="w-7 h-7 rounded-full bg-slate-700 text-white flex items-center justify-center flex-shrink-0 text-xs shadow-xs mt-0.5">
-                    <UserIcon className="w-4 h-4" />
-                  </div>
-                )}
+                <div className="flex-1 max-w-[88%] sm:max-w-[82%] space-y-2 pt-0.5">
+                  <p className="whitespace-pre-wrap text-sm sm:text-[15px] leading-7 text-[#0d0d0d]">
+                    {cleanText}
+                  </p>
+
+                  {/* Image Stimulus in ChatGPT style */}
+                  {msg.imageUrl && (
+                    <div className="pt-2">
+                      <div className="relative w-full max-w-[260px] rounded-2xl overflow-hidden border border-neutral-200 bg-[#f4f4f4]">
+                        <img
+                          src={msg.imageUrl}
+                          alt="AI 모습"
+                          className="w-full h-auto object-cover block"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
 
+          {/* ChatGPT Black Pulsing Dot Loading Indicator */}
           {isLoading && (
-            <div className="flex gap-2.5 items-center text-slate-400 text-xs pl-1">
-              <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center flex-shrink-0">
-                <Bot className="w-4 h-4" />
+            <div className="flex gap-3.5 items-center text-[#0d0d0d]">
+              <div className="w-7 h-7 rounded-full border border-neutral-200 bg-white text-[#0d0d0d] flex items-center justify-center flex-shrink-0 shadow-2xs">
+                <ChatGPTIcon className="w-4 h-4" />
               </div>
-              <div className="bg-white border border-slate-100 px-3.5 py-2.5 rounded-2xl rounded-bl-xs text-xs text-slate-500 flex items-center gap-2 shadow-xs">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping" />
-                <span>AI 친구가 답장을 입력하고 있어요...</span>
+              <div className="flex items-center gap-1.5 py-2">
+                <span className="w-3 h-3 rounded-full bg-[#0d0d0d] animate-pulse" />
               </div>
             </div>
           )}
@@ -704,22 +715,22 @@ export const StepChat2: React.FC<StepChat2Props> = ({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Dynamic Interactive Bottom Control Area */}
-        <div className="p-3.5 border-t border-slate-100 bg-white">
-          {/* 1-1. 성별 선택 (앞 페이지에서 선택한 성별에 색상 하이라이트 표시) */}
+        {/* ChatGPT Bottom Composer & Interactive Selection Area */}
+        <div className="px-4 sm:px-6 pb-4 pt-2 bg-white">
+          {/* 1-1. 성별 선택 (앞 페이지에서 선택한 성별에 블랙 하이라이트 표시) */}
           {flowStep === 'ask_gender' && (
-            <div className="space-y-2">
-              <div className="text-xs font-bold text-slate-600 px-1">
-                <span>💬 성별을 선택해 주세요:</span>
+            <div className="p-3.5 rounded-3xl bg-[#f4f4f4] border border-neutral-200/80 space-y-2.5">
+              <div className="text-xs font-semibold text-neutral-600 px-1">
+                <span>성별을 선택해 주세요</span>
               </div>
               <div className="grid grid-cols-2 gap-2.5">
                 <button
                   type="button"
                   onClick={() => handleGenderSelect('female')}
-                  className={`py-3 px-4 rounded-xl border font-bold text-xs sm:text-sm transition-all cursor-pointer ${
+                  className={`py-3 px-4 rounded-2xl border font-bold text-xs sm:text-sm transition-all cursor-pointer ${
                     chatGender === 'female'
-                      ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-200'
-                      : 'border-slate-200 bg-white hover:bg-indigo-50 text-slate-700'
+                      ? 'border-[#0d0d0d] bg-[#0d0d0d] text-white shadow-xs'
+                      : 'border-neutral-200 bg-white hover:bg-neutral-100 text-[#0d0d0d]'
                   }`}
                 >
                   👧 여성
@@ -727,10 +738,10 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                 <button
                   type="button"
                   onClick={() => handleGenderSelect('male')}
-                  className={`py-3 px-4 rounded-xl border font-bold text-xs sm:text-sm transition-all cursor-pointer ${
+                  className={`py-3 px-4 rounded-2xl border font-bold text-xs sm:text-sm transition-all cursor-pointer ${
                     chatGender === 'male'
-                      ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-200'
-                      : 'border-slate-200 bg-white hover:bg-indigo-50 text-slate-700'
+                      ? 'border-[#0d0d0d] bg-[#0d0d0d] text-white shadow-xs'
+                      : 'border-neutral-200 bg-white hover:bg-neutral-100 text-[#0d0d0d]'
                   }`}
                 >
                   👦 남성
@@ -741,21 +752,21 @@ export const StepChat2: React.FC<StepChat2Props> = ({
 
           {/* 1-2. 나이 입력 (앞 페이지에서 선택한 나이로 기본 세팅 + 상하 화살표 조절) */}
           {flowStep === 'ask_age' && (
-            <form onSubmit={handleAgeSubmit} className="space-y-2">
-              <div className="text-xs font-bold text-slate-600 px-1 flex items-center justify-between">
-                <span>💬 만 나이를 입력해 주세요:</span>
+            <form onSubmit={handleAgeSubmit} className="p-3.5 rounded-3xl bg-[#f4f4f4] border border-neutral-200/80 space-y-2.5">
+              <div className="text-xs font-semibold text-neutral-600 px-1 flex items-center justify-between">
+                <span>만 나이를 입력해 주세요</span>
                 <button
                   type="button"
                   onClick={handleBackToGender}
-                  className="text-[11px] text-slate-400 hover:text-slate-600 flex items-center gap-0.5 cursor-pointer font-normal underline"
+                  className="text-[11px] text-neutral-500 hover:text-[#0d0d0d] flex items-center gap-0.5 cursor-pointer font-normal underline"
                 >
                   <RotateCcw className="w-3 h-3" />
                   이전으로
                 </button>
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl border-2 border-indigo-500 bg-indigo-50/40">
-                  <span className="text-xs sm:text-sm font-bold text-slate-700">만</span>
+                <div className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-2xl border border-neutral-300 bg-white">
+                  <span className="text-xs sm:text-sm font-bold text-neutral-700">만</span>
                   <input
                     type="number"
                     min={19}
@@ -781,13 +792,13 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                       else if (num > 24) setAgeDraft('24');
                     }}
                     autoFocus
-                    className="w-16 text-center font-extrabold text-indigo-700 text-sm sm:text-base border-b-2 border-indigo-500 focus:outline-none bg-transparent"
+                    className="w-16 text-center font-extrabold text-[#0d0d0d] text-sm sm:text-base border-b-2 border-[#0d0d0d] focus:outline-none bg-transparent"
                   />
-                  <span className="text-xs sm:text-sm font-bold text-slate-700">세</span>
+                  <span className="text-xs sm:text-sm font-bold text-neutral-700">세</span>
                 </div>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm cursor-pointer shadow-xs"
+                  className="px-5 py-2.5 rounded-2xl bg-[#0d0d0d] hover:bg-neutral-800 text-white font-bold text-xs sm:text-sm cursor-pointer shadow-xs"
                 >
                   확인
                 </button>
@@ -797,13 +808,13 @@ export const StepChat2: React.FC<StepChat2Props> = ({
 
           {/* 1-3. 호칭 입력 */}
           {flowStep === 'ask_nickname' && (
-            <form onSubmit={handleNicknameSubmit} className="space-y-2">
-              <div className="text-xs font-bold text-slate-600 px-1 flex items-center justify-between">
-                <span>💬 AI 친구가 부를 이름(또는 별명)을 적어주세요:</span>
+            <form onSubmit={handleNicknameSubmit} className="p-3.5 rounded-3xl bg-[#f4f4f4] border border-neutral-200/80 space-y-2.5">
+              <div className="text-xs font-semibold text-neutral-600 px-1 flex items-center justify-between">
+                <span>AI 친구가 부를 이름(또는 별명)을 적어주세요</span>
                 <button
                   type="button"
                   onClick={handleBackToAge}
-                  className="text-[11px] text-slate-400 hover:text-slate-600 flex items-center gap-0.5 cursor-pointer font-normal underline"
+                  className="text-[11px] text-neutral-500 hover:text-[#0d0d0d] flex items-center gap-0.5 cursor-pointer font-normal underline"
                 >
                   <RotateCcw className="w-3 h-3" />
                   이전으로
@@ -817,11 +828,11 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                   value={nicknameDraft}
                   onChange={(e) => setNicknameDraft(e.target.value)}
                   autoFocus
-                  className="flex-1 px-4 py-2.5 rounded-xl border border-indigo-200 bg-white text-slate-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                  className="flex-1 px-4 py-2.5 rounded-2xl border border-neutral-300 bg-white text-[#0d0d0d] text-xs sm:text-sm focus:outline-none focus:border-[#0d0d0d] font-semibold"
                 />
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm cursor-pointer shadow-xs"
+                  className="px-5 py-2.5 rounded-2xl bg-[#0d0d0d] hover:bg-neutral-800 text-white font-bold text-xs sm:text-sm cursor-pointer shadow-xs"
                 >
                   확인
                 </button>
@@ -831,13 +842,13 @@ export const StepChat2: React.FC<StepChat2Props> = ({
 
           {/* 1-4. 직업 선택 (5종 + 기타 = 총 6개 균등 그리드) */}
           {flowStep === 'ask_occupation' && (
-            <div className="space-y-2">
-              <div className="text-xs font-bold text-slate-600 px-1 flex items-center justify-between">
-                <span>💬 현재 본인의 직업을 선택해 주세요:</span>
+            <div className="p-3.5 rounded-3xl bg-[#f4f4f4] border border-neutral-200/80 space-y-2.5">
+              <div className="text-xs font-semibold text-neutral-600 px-1 flex items-center justify-between">
+                <span>현재 본인의 직업을 선택해 주세요</span>
                 <button
                   type="button"
                   onClick={handleBackToNickname}
-                  className="text-[11px] text-slate-400 hover:text-slate-600 flex items-center gap-0.5 cursor-pointer font-normal underline"
+                  className="text-[11px] text-neutral-500 hover:text-[#0d0d0d] flex items-center gap-0.5 cursor-pointer font-normal underline"
                 >
                   <RotateCcw className="w-3 h-3" />
                   이전으로
@@ -849,7 +860,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                     key={idx}
                     type="button"
                     onClick={() => handleOccupationSelect(item.label)}
-                    className="py-2.5 px-3 rounded-xl border border-indigo-100 bg-indigo-50/70 hover:bg-indigo-600 hover:text-white text-indigo-950 font-bold text-xs transition-all cursor-pointer text-center"
+                    className="py-2.5 px-3 rounded-2xl border border-neutral-200 bg-white hover:bg-[#0d0d0d] hover:text-white hover:border-[#0d0d0d] text-[#0d0d0d] font-semibold text-xs transition-all cursor-pointer text-center"
                   >
                     {item.emoji} {item.label}
                   </button>
@@ -857,10 +868,10 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                 <button
                   type="button"
                   onClick={() => setShowCustomOccupation(true)}
-                  className={`py-2.5 px-3 rounded-xl border font-bold text-xs transition-all cursor-pointer text-center ${
+                  className={`py-2.5 px-3 rounded-2xl border font-semibold text-xs transition-all cursor-pointer text-center ${
                     showCustomOccupation
-                      ? 'border-indigo-600 bg-indigo-600 text-white'
-                      : 'border-indigo-100 bg-indigo-50/70 hover:bg-indigo-600 hover:text-white text-indigo-950'
+                      ? 'border-[#0d0d0d] bg-[#0d0d0d] text-white'
+                      : 'border-neutral-200 bg-white hover:bg-[#0d0d0d] hover:text-white text-[#0d0d0d]'
                   }`}
                 >
                   ✨ 기타 (직접 입력)
@@ -881,7 +892,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                       }
                     }}
                     autoFocus
-                    className="flex-1 px-3.5 py-2 rounded-xl border border-indigo-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="flex-1 px-3.5 py-2 rounded-2xl border border-neutral-300 bg-white text-xs sm:text-sm focus:outline-none focus:border-[#0d0d0d]"
                   />
                   <button
                     type="button"
@@ -890,7 +901,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                         handleOccupationSelect(customOccupationDraft.trim());
                       }
                     }}
-                    className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs cursor-pointer"
+                    className="px-4 py-2 rounded-2xl bg-[#0d0d0d] text-white font-bold text-xs cursor-pointer"
                   >
                     확인
                   </button>
@@ -901,17 +912,14 @@ export const StepChat2: React.FC<StepChat2Props> = ({
 
           {/* 2. 일상 에너지 상태 (5종 + 기타 = 총 6개 균등 그리드) */}
           {flowStep === 'select_energy' && !isLoading && (
-            <div className="space-y-2">
-              <div className="text-xs font-bold text-indigo-700 px-1 flex items-center justify-between">
-                <span className="flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  요즘 일상 컨디션을 골라주세요:
-                </span>
+            <div className="p-3.5 rounded-3xl bg-[#f4f4f4] border border-neutral-200/80 space-y-2.5">
+              <div className="text-xs font-semibold text-neutral-600 px-1 flex items-center justify-between">
+                <span>요즘 일상 컨디션을 골라주세요</span>
                 {currentTiming === 'mid' && (
                   <button
                     type="button"
                     onClick={handleBackToOccupation}
-                    className="text-[11px] text-slate-400 hover:text-slate-600 flex items-center gap-0.5 cursor-pointer font-normal underline"
+                    className="text-[11px] text-neutral-500 hover:text-[#0d0d0d] flex items-center gap-0.5 cursor-pointer font-normal underline"
                   >
                     <RotateCcw className="w-3 h-3" />
                     이전으로
@@ -924,7 +932,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                     key={i}
                     type="button"
                     onClick={() => handleEnergySelect(item.label)}
-                    className="p-2.5 rounded-xl border border-indigo-100 bg-indigo-50/60 hover:bg-indigo-600 hover:text-white text-indigo-950 font-bold text-xs text-center transition-all cursor-pointer shadow-2xs"
+                    className="p-2.5 rounded-2xl border border-neutral-200 bg-white hover:bg-[#0d0d0d] hover:text-white hover:border-[#0d0d0d] text-[#0d0d0d] font-semibold text-xs text-center transition-all cursor-pointer"
                   >
                     {item.emoji} {item.label}
                   </button>
@@ -932,10 +940,10 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                 <button
                   type="button"
                   onClick={() => setShowCustomEnergy(true)}
-                  className={`p-2.5 rounded-xl border font-bold text-xs text-center transition-all cursor-pointer ${
+                  className={`p-2.5 rounded-2xl border font-semibold text-xs text-center transition-all cursor-pointer ${
                     showCustomEnergy
-                      ? 'border-indigo-600 bg-indigo-600 text-white'
-                      : 'border-indigo-100 bg-indigo-50/60 hover:bg-indigo-600 hover:text-white text-indigo-950'
+                      ? 'border-[#0d0d0d] bg-[#0d0d0d] text-white'
+                      : 'border-neutral-200 bg-white hover:bg-[#0d0d0d] hover:text-white text-[#0d0d0d]'
                   }`}
                 >
                   ✨ 기타 (직접 입력)
@@ -956,7 +964,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                       }
                     }}
                     autoFocus
-                    className="flex-1 px-3.5 py-2 rounded-xl border border-indigo-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="flex-1 px-3.5 py-2 rounded-2xl border border-neutral-300 bg-white text-xs sm:text-sm focus:outline-none focus:border-[#0d0d0d]"
                   />
                   <button
                     type="button"
@@ -965,7 +973,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                         handleEnergySelect(customEnergyDraft.trim());
                       }
                     }}
-                    className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs cursor-pointer"
+                    className="px-4 py-2 rounded-2xl bg-[#0d0d0d] text-white font-bold text-xs cursor-pointer"
                   >
                     전송
                   </button>
@@ -976,16 +984,13 @@ export const StepChat2: React.FC<StepChat2Props> = ({
 
           {/* 3. 핵심 고민 영역 (5종 + 기타 = 총 6개 균등 그리드) */}
           {flowStep === 'select_worry' && !isLoading && (
-            <div className="space-y-2">
-              <div className="text-xs font-bold text-indigo-700 px-1 flex items-center justify-between">
-                <span className="flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  요즘 가장 신경 쓰이는 고민은 무엇인가요?
-                </span>
+            <div className="p-3.5 rounded-3xl bg-[#f4f4f4] border border-neutral-200/80 space-y-2.5">
+              <div className="text-xs font-semibold text-neutral-600 px-1 flex items-center justify-between">
+                <span>요즘 가장 신경 쓰이는 고민은 무엇인가요?</span>
                 <button
                   type="button"
                   onClick={handleResetEnergy}
-                  className="text-[11px] text-slate-400 hover:text-slate-600 flex items-center gap-0.5 cursor-pointer font-normal underline"
+                  className="text-[11px] text-neutral-500 hover:text-[#0d0d0d] flex items-center gap-0.5 cursor-pointer font-normal underline"
                 >
                   <RotateCcw className="w-3 h-3" />
                   이전 선택 다시하기
@@ -997,7 +1002,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                     key={i}
                     type="button"
                     onClick={() => handleWorrySelect(item.label)}
-                    className="p-2.5 rounded-xl border border-indigo-100 bg-indigo-50/60 hover:bg-indigo-600 hover:text-white text-indigo-950 font-bold text-xs text-center transition-all cursor-pointer shadow-2xs"
+                    className="p-2.5 rounded-2xl border border-neutral-200 bg-white hover:bg-[#0d0d0d] hover:text-white hover:border-[#0d0d0d] text-[#0d0d0d] font-semibold text-xs text-center transition-all cursor-pointer"
                   >
                     {item.emoji} {item.label}
                   </button>
@@ -1005,10 +1010,10 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                 <button
                   type="button"
                   onClick={() => setShowCustomWorry(true)}
-                  className={`p-2.5 rounded-xl border font-bold text-xs text-center transition-all cursor-pointer ${
+                  className={`p-2.5 rounded-2xl border font-semibold text-xs text-center transition-all cursor-pointer ${
                     showCustomWorry
-                      ? 'border-indigo-600 bg-indigo-600 text-white'
-                      : 'border-indigo-100 bg-indigo-50/60 hover:bg-indigo-600 hover:text-white text-indigo-950'
+                      ? 'border-[#0d0d0d] bg-[#0d0d0d] text-white'
+                      : 'border-neutral-200 bg-white hover:bg-[#0d0d0d] hover:text-white text-[#0d0d0d]'
                   }`}
                 >
                   ✨ 기타 (직접 입력)
@@ -1029,7 +1034,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                       }
                     }}
                     autoFocus
-                    className="flex-1 px-3.5 py-2 rounded-xl border border-indigo-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="flex-1 px-3.5 py-2 rounded-2xl border border-neutral-300 bg-white text-xs sm:text-sm focus:outline-none focus:border-[#0d0d0d]"
                   />
                   <button
                     type="button"
@@ -1038,7 +1043,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                         handleWorrySelect(customWorryDraft.trim());
                       }
                     }}
-                    className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs cursor-pointer"
+                    className="px-4 py-2 rounded-2xl bg-[#0d0d0d] text-white font-bold text-xs cursor-pointer"
                   >
                     전송
                   </button>
@@ -1049,23 +1054,22 @@ export const StepChat2: React.FC<StepChat2Props> = ({
 
           {/* 4. Mid 조건: 사진 요청 짧은 버튼 2종 */}
           {flowStep === 'mid_photo_ask' && !isLoading && (
-            <div className="space-y-2">
-              <div className="text-xs font-bold text-indigo-700 px-1 flex items-center gap-1">
-                <Camera className="w-4 h-4 text-indigo-600" />
-                <span>AI 친구에게 답장을 선택해 주세요:</span>
+            <div className="p-3.5 rounded-3xl bg-[#f4f4f4] border border-neutral-200/80 space-y-2.5">
+              <div className="text-xs font-semibold text-neutral-600 px-1">
+                <span>AI 친구에게 답장을 선택해 주세요</span>
               </div>
               <div className="grid grid-cols-2 gap-2.5">
                 <button
                   type="button"
                   onClick={() => handleMidPhotoReveal('응 궁금해! 보여줘')}
-                  className="p-3 rounded-xl border-2 border-indigo-500 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-900 font-bold text-xs sm:text-sm text-center transition-all cursor-pointer shadow-xs"
+                  className="p-3 rounded-2xl border border-[#0d0d0d] bg-white hover:bg-[#0d0d0d] hover:text-white text-[#0d0d0d] font-bold text-xs sm:text-sm text-center transition-all cursor-pointer"
                 >
                   📸 응 궁금해! 보여줘
                 </button>
                 <button
                   type="button"
                   onClick={() => handleMidPhotoReveal('오 어떻게 생겼어?')}
-                  className="p-3 rounded-xl border-2 border-indigo-500 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-900 font-bold text-xs sm:text-sm text-center transition-all cursor-pointer shadow-xs"
+                  className="p-3 rounded-2xl border border-[#0d0d0d] bg-white hover:bg-[#0d0d0d] hover:text-white text-[#0d0d0d] font-bold text-xs sm:text-sm text-center transition-all cursor-pointer"
                 >
                   ✨ 오 어떻게 생겼어?
                 </button>
@@ -1073,40 +1077,35 @@ export const StepChat2: React.FC<StepChat2Props> = ({
             </div>
           )}
 
-          {/* 5. 자유 텍스트 타이핑 모드 (사진 이야기 2턴 & 고민 대화 5턴) */}
+          {/* 5. ChatGPT Signature Rounded Pill Composer (사진 이야기 2턴 & 고민 대화 5턴) */}
           {(flowStep === 'pre_photo_chat' || flowStep === 'chat_worry' || flowStep === 'mid_photo_chat') && (
             <form onSubmit={handleSendMessage} className="space-y-1.5">
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2 bg-[#f4f4f4] rounded-full border border-neutral-200/90 pl-5 pr-2 py-2 shadow-2xs focus-within:border-neutral-400 transition-colors">
                 <input
                   ref={inputRef}
                   type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  placeholder={
-                    flowStep === 'pre_photo_chat' || flowStep === 'mid_photo_chat'
-                      ? 'AI 친구의 사진이나 분위기에 대해 편하게 말해 보세요...'
-                      : '고민에 대해 자유롭게 이야기해 보세요 (Enter로 전송)...'
-                  }
+                  placeholder="메시지 ChatGPT..."
                   disabled={isLoading}
-                  className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="flex-1 bg-transparent text-[#0d0d0d] placeholder:text-neutral-400 text-xs sm:text-sm focus:outline-none"
                 />
                 <button
                   type="submit"
                   disabled={!inputText.trim() || isLoading}
-                  className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-medium text-xs sm:text-sm flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                  className="w-8 h-8 rounded-full bg-[#0d0d0d] hover:bg-neutral-800 disabled:bg-neutral-300 text-white flex items-center justify-center transition-colors cursor-pointer flex-shrink-0"
                 >
-                  <span>전송</span>
-                  <Send className="w-3.5 h-3.5" />
+                  <ArrowUp className="w-4 h-4 stroke-[2.5]" />
                 </button>
               </div>
 
               {/* 사진 이야기 시작 직후(0턴)에는 직업 선택으로 되돌아가기 가능 */}
               {flowStep === 'pre_photo_chat' && photoFeedbackCount === 0 && !isLoading && (
-                <div className="flex justify-end pr-1">
+                <div className="flex justify-end pr-2">
                   <button
                     type="button"
                     onClick={handleBackToOccupation}
-                    className="text-[11px] text-slate-400 hover:text-slate-600 flex items-center gap-0.5 cursor-pointer underline"
+                    className="text-[11px] text-neutral-400 hover:text-[#0d0d0d] flex items-center gap-0.5 cursor-pointer underline"
                   >
                     <RotateCcw className="w-3 h-3" />
                     직업 다시 선택하기
@@ -1116,11 +1115,11 @@ export const StepChat2: React.FC<StepChat2Props> = ({
 
               {/* 고민 대화 1턴째일 때 주제 다시 선택하기 버튼 제공 */}
               {flowStep === 'chat_worry' && worryTurnCount <= 1 && !isLoading && (
-                <div className="flex justify-end pr-1">
+                <div className="flex justify-end pr-2">
                   <button
                     type="button"
                     onClick={handleResetWorry}
-                    className="text-[11px] text-slate-400 hover:text-slate-600 flex items-center gap-0.5 cursor-pointer underline"
+                    className="text-[11px] text-neutral-400 hover:text-[#0d0d0d] flex items-center gap-0.5 cursor-pointer underline"
                   >
                     <RotateCcw className="w-3 h-3" />
                     고민 주제 다시 선택하기
@@ -1142,13 +1141,19 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                     occupation: chatOccupation || '대학(원)생',
                   })
                 }
-                className="w-full py-3.5 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg cursor-pointer animate-bounce"
+                className="w-full py-3.5 px-5 rounded-full bg-[#0d0d0d] hover:bg-neutral-800 text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
               >
                 <span>대화 완료! 다음 설문으로 이동하기</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           )}
+
+          <div className="text-center mt-2">
+            <span className="text-[11px] text-neutral-400">
+              AI 친구와 편안하게 대화를 나누어 보세요.
+            </span>
+          </div>
         </div>
       </div>
     </div>

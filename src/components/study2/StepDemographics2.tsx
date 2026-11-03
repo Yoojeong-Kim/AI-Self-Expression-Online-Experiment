@@ -42,16 +42,16 @@ export const StepDemographics2: React.FC<StepDemographics2Props> = ({
 
   return (
     <div className="max-w-xl mx-auto py-8 px-4 animate-in fade-in duration-500">
-      <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/80">
+      <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xs border border-neutral-200/90">
         {/* Header */}
         <div className="text-center mb-7">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-3 shadow-2xs">
+          <div className="w-12 h-12 rounded-2xl bg-neutral-100 text-[#0d0d0d] flex items-center justify-center mx-auto mb-3">
             <UserCheck className="w-6 h-6" />
           </div>
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#0d0d0d]">
             사전 기본 정보 확인
           </h2>
-          <p className="text-xs sm:text-sm text-slate-500 mt-2 leading-relaxed">
+          <p className="text-xs sm:text-sm text-neutral-500 mt-2 leading-relaxed">
             실험 환경 설정을 위해 성별과 만 나이를 먼저 확인합니다.
           </p>
         </div>
@@ -64,9 +64,9 @@ export const StepDemographics2: React.FC<StepDemographics2Props> = ({
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* 1. 성별 선택 */}
-          <div className="p-4 sm:p-5 rounded-2xl border border-slate-200/90 bg-slate-50/50 space-y-3">
-            <label className="block text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5">
-              <User className="w-4 h-4 text-indigo-600" />
+          <div className="p-4 sm:p-5 rounded-2xl border border-neutral-200 bg-[#f9f9f9] space-y-3">
+            <label className="block text-xs sm:text-sm font-bold text-[#0d0d0d] flex items-center gap-1.5">
+              <User className="w-4 h-4 text-[#0d0d0d]" />
               <span>1. 귀하의 성별을 선택해 주세요.</span>
             </label>
             <div className="grid grid-cols-2 gap-3">
@@ -75,8 +75,8 @@ export const StepDemographics2: React.FC<StepDemographics2Props> = ({
                 onClick={() => setGender('female')}
                 className={`py-3.5 px-4 rounded-xl font-bold text-xs sm:text-sm border transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   gender === 'female'
-                    ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm'
-                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                    ? 'border-[#0d0d0d] bg-[#0d0d0d] text-white shadow-xs'
+                    : 'border-neutral-200 bg-white text-[#0d0d0d] hover:border-neutral-400 hover:bg-neutral-50'
                 }`}
               >
                 <span>👧 여성</span>
@@ -86,8 +86,8 @@ export const StepDemographics2: React.FC<StepDemographics2Props> = ({
                 onClick={() => setGender('male')}
                 className={`py-3.5 px-4 rounded-xl font-bold text-xs sm:text-sm border transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   gender === 'male'
-                    ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm'
-                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                    ? 'border-[#0d0d0d] bg-[#0d0d0d] text-white shadow-xs'
+                    : 'border-neutral-200 bg-white text-[#0d0d0d] hover:border-neutral-400 hover:bg-neutral-50'
                 }`}
               >
                 <span>👦 남성</span>
@@ -96,13 +96,13 @@ export const StepDemographics2: React.FC<StepDemographics2Props> = ({
           </div>
 
           {/* 2. 만 나이 입력 (19~24 범위 제한, 상하 화살표 조절) */}
-          <div className="p-4 sm:p-5 rounded-2xl border border-slate-200/90 bg-slate-50/50 space-y-3">
-            <label className="block text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5">
-              <Calendar className="w-4 h-4 text-indigo-600" />
+          <div className="p-4 sm:p-5 rounded-2xl border border-neutral-200 bg-[#f9f9f9] space-y-3">
+            <label className="block text-xs sm:text-sm font-bold text-[#0d0d0d] flex items-center gap-1.5">
+              <Calendar className="w-4 h-4 text-[#0d0d0d]" />
               <span>2. 귀하의 만 나이를 입력해 주세요.</span>
             </label>
-            <div className="flex items-center justify-center gap-3 py-2.5 bg-white rounded-xl border border-slate-200 px-4">
-              <span className="text-sm sm:text-base font-bold text-slate-700">만</span>
+            <div className="flex items-center justify-center gap-3 py-2.5 bg-white rounded-xl border border-neutral-200 px-4">
+              <span className="text-sm sm:text-base font-bold text-neutral-700">만</span>
               <input
                 type="number"
                 min={19}
@@ -127,16 +127,16 @@ export const StepDemographics2: React.FC<StepDemographics2Props> = ({
                   if (isNaN(num) || num < 19) setAgeInput('19');
                   else if (num > 24) setAgeInput('24');
                 }}
-                className="w-20 text-center text-lg sm:text-xl font-extrabold text-indigo-600 border-b-2 border-indigo-400 focus:border-indigo-600 focus:outline-none py-1 bg-transparent"
+                className="w-20 text-center text-lg sm:text-xl font-extrabold text-[#0d0d0d] border-b-2 border-[#0d0d0d] focus:outline-none py-1 bg-transparent"
               />
-              <span className="text-sm sm:text-base font-bold text-slate-700">세</span>
+              <span className="text-sm sm:text-base font-bold text-neutral-700">세</span>
             </div>
           </div>
 
           {/* Submit */}
           <button
             type="submit"
-            className="w-full py-4 px-6 rounded-2xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-sm sm:text-base cursor-pointer"
+            className="w-full py-4 px-6 rounded-full font-bold text-white bg-[#0d0d0d] hover:bg-neutral-800 shadow-md transition-all flex items-center justify-center gap-2 text-sm sm:text-base cursor-pointer"
           >
             <span>AI 친구와 대화 시작하기</span>
             <ArrowRight className="w-4 h-4" />

@@ -173,26 +173,28 @@ export default function Study2Page() {
 
   if (!mounted || !participant) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-9 h-9 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs font-bold text-slate-500">실험 환경(Study 2)을 준비하고 있습니다...</p>
+          <div className="w-8 h-8 border-2 border-[#0d0d0d] border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs font-semibold text-neutral-500">화면을 준비하고 있습니다...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/70 flex flex-col font-sans text-slate-800">
-      <Header
-        language={language}
-        onLanguageChange={setLanguage}
-        currentStep={currentStep}
-        condition={participant.condition}
-        participantId={participant.id}
-      />
+    <div className={`min-h-screen flex flex-col font-sans text-[#0d0d0d] ${currentStep === 'chat' ? 'bg-white' : 'bg-[#f9f9f9]'}`}>
+      {currentStep !== 'chat' && (
+        <Header
+          language={language}
+          onLanguageChange={setLanguage}
+          currentStep={currentStep}
+          condition={participant.condition}
+          participantId={participant.id}
+        />
+      )}
 
-      <main className="flex-1 py-4 sm:py-6">
+      <main className={`flex-1 ${currentStep === 'chat' ? 'py-2 sm:py-4' : 'py-4 sm:py-6'}`}>
         {/* Step 1: Pre-Demographics (Gender, Age, Occupation) */}
         {currentStep === 'demographics' && (
           <StepDemographics2
