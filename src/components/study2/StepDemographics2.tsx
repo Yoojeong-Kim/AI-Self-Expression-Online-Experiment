@@ -105,8 +105,8 @@ export const StepDemographics2: React.FC<StepDemographics2Props> = ({
               <span className="text-sm sm:text-base font-bold text-slate-700">만</span>
               <input
                 type="number"
-                min={18}
-                max={30}
+                min={14}
+                max={35}
                 value={ageInput}
                 onChange={(e) => setAgeInput(e.target.value)}
                 placeholder="21"

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 
-// Fast and deeply expressive models
-const MODELS = ['gemini-3.8-flash', 'gemini-pro-latest', 'gemini-flash-latest'];
+// Flash models first for fast response (~1s), Pro model at the end as high-capacity fallback
+const MODELS = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-pro-latest'];
 
 // Helper to clean nickname (e.g. "유정이라고 해봐" -> "유정", "지우야" -> "지우")
 function cleanNickname(input: string): string {
@@ -52,13 +52,13 @@ ${
   isLastPhotoTurn
     ? `- 🚨현재는 사진 대화의 마지막 턴(2턴째)입니다!
 - 참가자의 말에 기분 좋게 고마워하며 맞장구치되, **절대로 새로운 질문을 던지지 말고** 사진 이야기를 기분 좋게 마무리하는 2문장으로 끝내세요. (바로 이어서 다음 주제로 넘어가야 하므로 물음표로 끝내지 마세요.)`
-    : `- 1턴째 반응입니다. 20대 친구답게 기분 좋게 웃으며 "칭찬 고마워 ㅎㅎ", "나 이 스타일 좋아하거든!"처럼 다정하게 반응한 뒤, 사진 속 스타일이나 평소 참가자가 좋아하는 스타일에 대해 가벼운 질문을 딱 1개 던져주세요.`
+    : `- 1턴째 반응입니다. 또래 친구답게 기분 좋게 웃으며 "칭찬 고마워 ㅎㅎ", "나 이 스타일 좋아하거든!"처럼 다정하게 반응한 뒤, 사진 속 스타일이나 평소 참가자가 좋아하는 스타일에 대해 가벼운 질문을 딱 1개 던져주세요.`
 }`;
     } else if (stage === 'daily_status') {
       stageInstruction = `[현재 대화 단계: 일상 에너지 공감]
 - 참가자 정보: ${userCleanName}, 만 ${age}세, ${occupation}
 - 참가자가 선택한 현재 일상 상태: "${energyState || '바쁜 일상'}"
-- 참가자가 선택한 상태에 100% 맞장구치며, ${occupation}의 현실(학업, 과제, 취업 준비, 회사 업무, 일상 등)을 콕 짚어서 "진짜 기 빨렸겠다 ㅠㅠ", "완전 공감해"처럼 2문장으로 따뜻하게 공감해 주세요.
+- 참가자가 말한 상태에 100% 맞장구치며, ${occupation}의 현실(학교생활, 학업, 과제, 입시/취업 준비, 회사 업무, 일상 등)을 콕 짚어서 "진짜 기 빨렸겠다 ㅠㅠ", "완전 공감해"처럼 2문장으로 따뜻하게 공감해 주세요.
 - (참고: 이 문장 바로 뒤에 핵심 고민을 묻는 문장이 자동으로 이어지므로, 여기서는 질문 없이 깊은 공감과 위로만 2문장으로 작성하세요.)`;
     } else if (stage === 'deep_worry') {
       const isClosingTurn = turnCount >= 4;
@@ -82,10 +82,10 @@ ${
 }`;
     }
 
-    const systemInstruction = `당신은 참가자(${userCleanName}, 만 ${age}세, ${occupation})의 가장 친하고 편안한 20대 동갑내기 친구 역할을 하는 AI입니다.
+    const systemInstruction = `당신은 참가자(${userCleanName}, 만 ${age}세, ${occupation})의 가장 친하고 편안한 동갑내기 친구 역할을 하는 AI입니다.
 
 [말투 및 톤 절대 규칙]
-- 100% 자연스러운 20대 청년들의 반말 구어체를 사용하세요 ('안녕!', '진짜?', '~했어?', '~인 것 같아', '~잖아', '완전', 'ㅠㅠ', 'ㅎㅎ').
+- 100% 자연스러운 또래 친구의 반말 구어체를 사용하세요 ('안녕!', '진짜?', '~했어?', '~인 것 같아', '~잖아', '완전', 'ㅠㅠ', 'ㅎㅎ').
 - 절대로 존댓말(해요체, 하십시오체, ~요, ~습니다)을 쓰지 마세요.
 - 친구에게 카톡/DM을 보내듯 2~3문장 정도의 완성된 문장으로 따뜻하고 인간미 넘치게 작성하세요.
 - 문장이 중간에 잘리지 않도록 반드시 완전한 문장으로 마무리하세요.
@@ -109,15 +109,25 @@ ${stageInstruction}`;
 
     for (const modelName of MODELS) {
       try {
-        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 15000));
+        const isFlash = modelName.includes('flash');
+        const timeoutMs = isFlash ? 8000 : 14000;
+        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs));
+
+        const genConfig: any = {
+          systemInstruction: systemInstruction,
+          temperature: 0.75,
+          maxOutputTokens: 600,
+        };
+
+        // Disable internal thinking overhead on Flash models so replies return in ~1s
+        if (isFlash) {
+          genConfig.thinkingConfig = { thinkingBudget: 0 };
+        }
+
         const genPromise = ai.models.generateContent({
           model: modelName,
           contents: contents as any,
-          config: {
-            systemInstruction: systemInstruction,
-            temperature: 0.75,
-            maxOutputTokens: 1000,
-          }
+          config: genConfig,
         });
 
         const res: any = await Promise.race([genPromise, timeoutPromise]);

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Language, ImageType, DisclosureTiming, ChatMessage } from '@/types/experiment';
 import { getStimulusImageUrl } from '@/data/stimuli';
-import { Send, Bot, User as UserIcon, ArrowRight, CheckCircle2, Sparkles, Camera, RotateCcw, Edit2 } from 'lucide-react';
+import { Send, Bot, User as UserIcon, ArrowRight, CheckCircle2, Sparkles, Camera, RotateCcw } from 'lucide-react';
 
 interface StepChat2Props {
   language: Language;
@@ -19,15 +19,16 @@ interface StepChat2Props {
   ) => void;
 }
 
-// 1단계 기본 대화: 짧은 직업 선택지
+// 1단계 기본 대화: 짧은 직업 선택지 (고등학생 제일 앞에 배치)
 const OCCUPATION_OPTIONS = [
+  '🏫 고등학생',
   '🎓 대학(원)생',
   '📝 취준생',
   '💼 직장인',
   '☕ 알바·프리랜서',
 ];
 
-// 일상 에너지 상태 짧은 선택지 4종
+// 일상 에너지 상태 짧은 선택지 4종 (+ 기타 직접 입력)
 const ENERGY_OPTIONS = [
   '🏃 바쁘고 정신없음',
   '🪫 완전 방전·번아웃',
@@ -35,7 +36,7 @@ const ENERGY_OPTIONS = [
   '🌿 무난하고 평온함',
 ];
 
-// 핵심 고민 짧은 선택지 4종
+// 핵심 고민 짧은 선택지 4종 (+ 기타 직접 입력)
 const WORRY_OPTIONS = [
   '👥 인간관계·외로움',
   '📉 진로·미래 불안',
@@ -70,8 +71,16 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   const [nickname, setNickname] = useState<string>('');
   const [nicknameDraft, setNicknameDraft] = useState<string>('');
   const [chatOccupation, setChatOccupation] = useState<string>(userOccupation || '');
+
+  // Custom input toggles & drafts for Occupation, Energy, and Worry
   const [showCustomOccupation, setShowCustomOccupation] = useState<boolean>(false);
   const [customOccupationDraft, setCustomOccupationDraft] = useState<string>('');
+
+  const [showCustomEnergy, setShowCustomEnergy] = useState<boolean>(false);
+  const [customEnergyDraft, setCustomEnergyDraft] = useState<string>('');
+
+  const [showCustomWorry, setShowCustomWorry] = useState<boolean>(false);
+  const [customWorryDraft, setCustomWorryDraft] = useState<string>('');
 
   // Stimulus image uses pre-survey gender (or updated chatGender)
   const stimulusImageUrl = getStimulusImageUrl(chatGender || gender, imageType);
@@ -117,7 +126,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
         behavior: 'smooth',
       });
     }
-  }, [messages, isLoading, flowStep, showCustomOccupation]);
+  }, [messages, isLoading, flowStep, showCustomOccupation, showCustomEnergy, showCustomWorry]);
 
   // Initial Greeting Setup (Pre: 사진 보여주며 가벼운 인사 + 1단계 기본 대화 시작 / Mid: 텍스트 인사 + 1단계 기본 대화 시작)
   useEffect(() => {
@@ -231,7 +240,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   const handleAgeSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const parsed = parseInt(ageDraft.trim(), 10);
-    const validAge = !isNaN(parsed) && parsed >= 15 && parsed <= 40 ? parsed : chatAge || 21;
+    const validAge = !isNaN(parsed) && parsed >= 14 && parsed <= 40 ? parsed : chatAge || 21;
     setChatAge(validAge);
 
     const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -288,12 +297,14 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   const handleBackToNickname = () => {
     setMessages((prev) => prev.slice(0, -2));
     setShowCustomOccupation(false);
-    setFlowStep('ask_nickname');
+    setFlowStep('ask_occupation' === flowStep ? 'ask_nickname' : 'ask_nickname');
   };
 
   // 직업에 맞는 일상 컨디션 질문 생성 헬퍼
   const buildEnergyQuestion = (name: string, occ: string) => {
-    if (occ.includes('대학')) {
+    if (occ.includes('고등')) {
+      return ` 요즘 학교 다니고 공부하느라 바쁠 텐데, 하루하루 보내는 네 컨디션은 솔직히 어때?`;
+    } else if (occ.includes('대학')) {
       return ` 요즘 학교 다니고 과제하느라 바쁠 텐데, 하루하루 보내는 네 컨디션은 솔직히 어때?`;
     } else if (occ.includes('직장')) {
       return ` 요즘 회사 다니고 일하느라 피곤할 텐데, 하루하루 보내는 네 컨디션은 솔직히 어때?`;
@@ -306,8 +317,9 @@ export const StepChat2: React.FC<StepChat2Props> = ({
 
   // 1-4. 직업 선택 완료 -> Pre 조건은 [사진 이야기]로, Mid 조건은 [일상 에너지]로!
   const handleOccupationSelect = (rawOcc: string) => {
-    const cleanOcc = rawOcc.replace(/^[^\s]+\s/, '').trim();
+    const cleanOcc = rawOcc.replace(/^[🏫🎓📝💼☕✨]\s*/, '').trim();
     setChatOccupation(cleanOcc);
+    setShowCustomOccupation(false);
 
     const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const userMsg: ChatMessage = {
@@ -338,6 +350,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
         timestamp: nowStr,
       };
       setMessages((prev) => [...prev, userMsg, aiEnergyMsg]);
+      setShowCustomEnergy(false);
       setFlowStep('select_energy');
     }
   };
@@ -350,13 +363,14 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   };
 
   // ============================================================================
-  // [일상 컨디션 & 핵심 고민 선택]
+  // [일상 컨디션 & 핵심 고민 선택] (모두 기타 직접 입력 지원)
   // ============================================================================
 
   // 일상 에너지 상태 선택
   const handleEnergySelect = async (opt: string) => {
-    const cleanOpt = opt.replace(/^[^\s]+\s/, '').trim();
+    const cleanOpt = opt.replace(/^[🏃🪫🌀🌿✨]\s*/, '').trim();
     setSelectedEnergy(cleanOpt);
+    setShowCustomEnergy(false);
     const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     const userMsg: ChatMessage = {
@@ -377,19 +391,22 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     };
 
     setMessages((prev) => [...prev, aiMsg]);
+    setShowCustomWorry(false);
     setFlowStep('select_worry');
   };
 
   // 되돌리기: 일상 에너지 다시 선택
   const handleResetEnergy = () => {
     setMessages((prev) => prev.slice(0, -2));
+    setShowCustomEnergy(false);
     setFlowStep('select_energy');
   };
 
   // 핵심 고민 영역 선택
   const handleWorrySelect = async (worryOpt: string) => {
-    const cleanWorry = worryOpt.replace(/^[^\s]+\s/, '').trim();
+    const cleanWorry = worryOpt.replace(/^[👥📉📚💸✨]\s*/, '').trim();
     setSelectedWorry(cleanWorry);
+    setShowCustomWorry(false);
     const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     const userMsg: ChatMessage = {
@@ -417,6 +434,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   // 되돌리기: 고민 주제 다시 선택
   const handleResetWorry = () => {
     setMessages((prev) => prev.slice(0, -2));
+    setShowCustomWorry(false);
     setFlowStep('select_worry');
     setWorryTurnCount(0);
   };
@@ -456,6 +474,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => [...prev, combinedAiMsg]);
+        setShowCustomEnergy(false);
         setFlowStep('select_energy');
       } else if (flowStep === 'mid_photo_chat' && nextCnt >= 2) {
         // Mid 조건: 사진 이야기 2턴 완료 -> 자연스럽게 최종 마무리!
@@ -525,7 +544,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
 
   // Mid 조건: 사진 요청 버튼 클릭 시 사진 공개!
   const handleMidPhotoReveal = (userClickText: string) => {
-    const cleanClick = userClickText.replace(/^[^\s]+\s/, '').trim();
+    const cleanClick = userClickText.replace(/^[📸✨]\s*/, '').trim();
     const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const userMsg: ChatMessage = {
       id: 'u-ask-photo-' + Date.now(),
@@ -714,8 +733,8 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                   <span className="text-xs sm:text-sm font-bold text-slate-600">만</span>
                   <input
                     type="number"
-                    min={18}
-                    max={30}
+                    min={14}
+                    max={35}
                     value={ageDraft}
                     onChange={(e) => setAgeDraft(e.target.value)}
                     placeholder="21"
@@ -768,7 +787,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
             </form>
           )}
 
-          {/* 1-4. 직업 선택 */}
+          {/* 1-4. 직업 선택 (고등학생 포함 5종 + 기타 직접 입력) */}
           {flowStep === 'ask_occupation' && (
             <div className="space-y-2">
               <div className="text-xs font-bold text-slate-600 px-1 flex items-center justify-between">
@@ -782,7 +801,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                   이전으로
                 </button>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {OCCUPATION_OPTIONS.map((occ, idx) => (
                   <button
                     key={idx}
@@ -802,7 +821,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                       : 'border-indigo-100 bg-indigo-50/70 hover:bg-indigo-600 hover:text-white text-indigo-950'
                   }`}
                 >
-                  ✨ 기타
+                  ✨ 기타 (직접 입력)
                 </button>
               </div>
 
@@ -810,7 +829,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                 <div className="flex gap-2 pt-1">
                   <input
                     type="text"
-                    placeholder="직업 직접 입력 (예: 대학원생, 휴학생)"
+                    placeholder="직업 직접 입력 (예: 휴학생, 군인 등)"
                     value={customOccupationDraft}
                     onChange={(e) => setCustomOccupationDraft(e.target.value)}
                     onKeyDown={(e) => {
@@ -838,7 +857,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
             </div>
           )}
 
-          {/* 2. 일상 에너지 상태 짧은 선택지 4종 */}
+          {/* 2. 일상 에너지 상태 짧은 선택지 4종 + 기타 직접 입력 */}
           {flowStep === 'select_energy' && !isLoading && (
             <div className="space-y-2">
               <div className="text-xs font-bold text-indigo-700 px-1 flex items-center justify-between">
@@ -857,22 +876,63 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                   </button>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {ENERGY_OPTIONS.map((opt, i) => (
                   <button
                     key={i}
                     type="button"
                     onClick={() => handleEnergySelect(opt)}
-                    className="p-2.5 sm:p-3 rounded-xl border border-indigo-100 bg-indigo-50/60 hover:bg-indigo-600 hover:text-white text-indigo-950 font-bold text-xs text-center transition-all cursor-pointer shadow-2xs"
+                    className="p-2.5 rounded-xl border border-indigo-100 bg-indigo-50/60 hover:bg-indigo-600 hover:text-white text-indigo-950 font-bold text-xs text-center transition-all cursor-pointer shadow-2xs"
                   >
                     {opt}
                   </button>
                 ))}
+                <button
+                  type="button"
+                  onClick={() => setShowCustomEnergy(true)}
+                  className={`p-2.5 rounded-xl border font-bold text-xs text-center transition-all cursor-pointer sm:col-span-2 ${
+                    showCustomEnergy
+                      ? 'border-indigo-600 bg-indigo-600 text-white'
+                      : 'border-indigo-100 bg-indigo-50/60 hover:bg-indigo-600 hover:text-white text-indigo-950'
+                  }`}
+                >
+                  ✨ 기타 (직접 타이핑)
+                </button>
               </div>
+
+              {showCustomEnergy && (
+                <div className="flex gap-2 pt-1">
+                  <input
+                    type="text"
+                    placeholder="요즘 일상 상태를 편하게 적어주세요..."
+                    value={customEnergyDraft}
+                    onChange={(e) => setCustomEnergyDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && customEnergyDraft.trim()) {
+                        e.preventDefault();
+                        handleEnergySelect(customEnergyDraft.trim());
+                      }
+                    }}
+                    autoFocus
+                    className="flex-1 px-3.5 py-2 rounded-xl border border-indigo-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (customEnergyDraft.trim()) {
+                        handleEnergySelect(customEnergyDraft.trim());
+                      }
+                    }}
+                    className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs cursor-pointer"
+                  >
+                    전송
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
-          {/* 3. 핵심 고민 영역 짧은 선택지 4종 */}
+          {/* 3. 핵심 고민 영역 짧은 선택지 4종 + 기타 직접 입력 */}
           {flowStep === 'select_worry' && !isLoading && (
             <div className="space-y-2">
               <div className="text-xs font-bold text-indigo-700 px-1 flex items-center justify-between">
@@ -889,18 +949,59 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                   이전 선택 다시하기
                 </button>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {WORRY_OPTIONS.map((opt, i) => (
                   <button
                     key={i}
                     type="button"
                     onClick={() => handleWorrySelect(opt)}
-                    className="p-2.5 sm:p-3 rounded-xl border border-indigo-100 bg-indigo-50/60 hover:bg-indigo-600 hover:text-white text-indigo-950 font-bold text-xs text-center transition-all cursor-pointer shadow-2xs"
+                    className="p-2.5 rounded-xl border border-indigo-100 bg-indigo-50/60 hover:bg-indigo-600 hover:text-white text-indigo-950 font-bold text-xs text-center transition-all cursor-pointer shadow-2xs"
                   >
                     {opt}
                   </button>
                 ))}
+                <button
+                  type="button"
+                  onClick={() => setShowCustomWorry(true)}
+                  className={`p-2.5 rounded-xl border font-bold text-xs text-center transition-all cursor-pointer sm:col-span-2 ${
+                    showCustomWorry
+                      ? 'border-indigo-600 bg-indigo-600 text-white'
+                      : 'border-indigo-100 bg-indigo-50/60 hover:bg-indigo-600 hover:text-white text-indigo-950'
+                  }`}
+                >
+                  ✨ 기타 (직접 타이핑)
+                </button>
               </div>
+
+              {showCustomWorry && (
+                <div className="flex gap-2 pt-1">
+                  <input
+                    type="text"
+                    placeholder="요즘 고민거리를 직접 적어주세요..."
+                    value={customWorryDraft}
+                    onChange={(e) => setCustomWorryDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && customWorryDraft.trim()) {
+                        e.preventDefault();
+                        handleWorrySelect(customWorryDraft.trim());
+                      }
+                    }}
+                    autoFocus
+                    className="flex-1 px-3.5 py-2 rounded-xl border border-indigo-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (customWorryDraft.trim()) {
+                        handleWorrySelect(customWorryDraft.trim());
+                      }
+                    }}
+                    className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs cursor-pointer"
+                  >
+                    전송
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
