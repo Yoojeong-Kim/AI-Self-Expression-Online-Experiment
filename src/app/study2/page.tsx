@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Header } from '@/components/Header';
 import { StepDemographics2 } from '@/components/study2/StepDemographics2';
 import { StepChat2 } from '@/components/study2/StepChat2';
 import { StepSurvey } from '@/components/StepSurvey';
@@ -190,18 +189,7 @@ export default function Study2Page() {
           : 'min-h-screen bg-[#f9f9f9] flex flex-col font-sans text-[#0d0d0d]'
       }
     >
-      {currentStep !== 'chat' && (
-        <Header
-          language={language}
-          onLanguageChange={setLanguage}
-          currentStep={currentStep}
-          condition={participant.condition}
-          participantId={participant.id}
-          hideLanguageToggle={true}
-        />
-      )}
-
-      <main className={currentStep === 'chat' ? 'w-full h-full flex items-center justify-center' : 'flex-1 py-4 sm:py-6'}>
+      <main className={currentStep === 'chat' ? 'w-full h-full flex items-center justify-center' : 'flex-1 py-6 sm:py-10'}>
         {/* Step 1: Pre-Demographics (Gender, Age, Occupation) */}
         {currentStep === 'demographics' && (
           <StepDemographics2
