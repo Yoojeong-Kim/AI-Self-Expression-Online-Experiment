@@ -106,7 +106,9 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
 
-  const [flowStep, setFlowStep] = useState<string>('ask_gender');
+  const [flowStep, setFlowStep] = useState<string>(
+    currentTiming === 'pre' ? 'pre_photo_chat' : 'ask_gender'
+  );
 
   const [selectedEnergy, setSelectedEnergy] = useState<string>('');
   const [selectedWorry, setSelectedWorry] = useState<string>('');
@@ -145,11 +147,14 @@ export const StepChat2: React.FC<StepChat2Props> = ({
         {
           id: 'pre-init',
           sender: 'ai',
-          text: '안녕! 만나서 반가워 ㅎㅎ 먼저 내 모습 보여주면서 인사할게! (사진_노출됨)\n우리 본격적으로 이야기 나누기 전에 서로 기본적인 것부터 알아가 볼까? 먼저 너는 성별이 어떻게 돼?',
+          text: '안녕! 만나서 반가워 ㅎㅎ 본격적으로 이야기 나누기 전에 내 모습 먼저 보여줄게! (사진_노출됨)\n이건 내 모습이야. 내 모습이나 스타일 보니 어때 보여?',
           timestamp: nowStr,
           imageUrl: initialPhotoUrl,
         },
       ]);
+      setPhotoFeedbackCount(0);
+      setFlowStep('pre_photo_chat');
+      setTimeout(() => inputRef.current?.focus(), 150);
     } else {
       setMessages([
         {
@@ -159,8 +164,8 @@ export const StepChat2: React.FC<StepChat2Props> = ({
           timestamp: nowStr,
         },
       ]);
+      setFlowStep('ask_gender');
     }
-    setFlowStep('ask_gender');
   }, [currentTiming, gender, imageType]);
 
   // API Call helper
@@ -325,7 +330,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     }
   };
 
-  // 1-4. 직업 선택 완료 -> Pre 조건은 [사진 이야기]로, Mid 조건은 [일상 에너지]로!
+  // 1-4. 직업 선택 완료 -> 곧바로 [일상 에너지] 질문으로!
   const handleOccupationSelect = (cleanOccText: string) => {
     const cleanOcc = cleanOccText.trim();
     setChatOccupation(cleanOcc);
@@ -339,28 +344,15 @@ export const StepChat2: React.FC<StepChat2Props> = ({
       timestamp: nowStr,
     };
 
-    if (currentTiming === 'pre') {
-      const aiPhotoAskMsg: ChatMessage = {
-        id: 'ai-pre-photo-start-' + Date.now(),
-        sender: 'ai',
-        text: `오 ${cleanOcc}이구나! 반가워 ${nickname}아 ㅎㅎ\n우리 이제 서로 기본적인 건 다 알았네! 아까 처음에 인사할 때 보여준 내 사진 봤지? 내 모습이나 스타일 보니 어때 보여?`,
-        timestamp: nowStr,
-      };
-      setMessages((prev) => [...prev, userMsg, aiPhotoAskMsg]);
-      setPhotoFeedbackCount(0);
-      setFlowStep('pre_photo_chat');
-      setTimeout(() => inputRef.current?.focus(), 150);
-    } else {
-      const aiEnergyMsg: ChatMessage = {
-        id: 'ai-energy-q-' + Date.now(),
-        sender: 'ai',
-        text: `오 ${cleanOcc}이구나! 반가워 ${nickname}아 ㅎㅎ` + buildEnergyQuestion(nickname, cleanOcc),
-        timestamp: nowStr,
-      };
-      setMessages((prev) => [...prev, userMsg, aiEnergyMsg]);
-      setShowCustomEnergy(false);
-      setFlowStep('select_energy');
-    }
+    const aiEnergyMsg: ChatMessage = {
+      id: 'ai-energy-q-' + Date.now(),
+      sender: 'ai',
+      text: `오 ${cleanOcc}이구나! 반가워 ${nickname}아 ㅎㅎ` + buildEnergyQuestion(nickname, cleanOcc),
+      timestamp: nowStr,
+    };
+    setMessages((prev) => [...prev, userMsg, aiEnergyMsg]);
+    setShowCustomEnergy(false);
+    setFlowStep('select_energy');
   };
 
   // 되돌리기: 직업 다시 선택
@@ -470,14 +462,13 @@ export const StepChat2: React.FC<StepChat2Props> = ({
 
       if (flowStep === 'pre_photo_chat' && nextCnt >= 2) {
         const combinedAiMsg: ChatMessage = {
-          id: 'ai-photo-to-energy-' + Date.now(),
+          id: 'ai-photo-to-gender-' + Date.now(),
           sender: 'ai',
-          text: `${aiReply}\n\n내 모습 좋게 봐줘서 고마워 ㅎㅎ 그나저나 ${nickname}아,${buildEnergyQuestion(nickname, chatOccupation)}`,
+          text: `${aiReply}\n\n내 모습 좋게 봐줘서 고마워 ㅎㅎ 그럼 이제 서로 기본적인 것부터 하나씩 알아가 볼까? 먼저 너는 성별이 어떻게 돼?`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => [...prev, combinedAiMsg]);
-        setShowCustomEnergy(false);
-        setFlowStep('select_energy');
+        setFlowStep('ask_gender');
       } else if (flowStep === 'mid_photo_chat' && nextCnt >= 2) {
         const combinedCompleteMsg: ChatMessage = {
           id: 'ai-complete-mid-' + Date.now(),
@@ -855,16 +846,14 @@ export const StepChat2: React.FC<StepChat2Props> = ({
           <div className="p-3 rounded-2xl bg-[#f4f4f4] border border-neutral-200/80 space-y-2">
             <div className="text-xs font-semibold text-neutral-600 px-1 flex items-center justify-between">
               <span>요즘 일상 컨디션을 골라주세요</span>
-              {currentTiming === 'mid' && (
-                <button
-                  type="button"
-                  onClick={handleBackToOccupation}
-                  className="text-[11px] text-neutral-500 hover:text-[#0d0d0d] flex items-center gap-0.5 cursor-pointer font-normal underline"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  이전으로
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={handleBackToOccupation}
+                className="text-[11px] text-neutral-500 hover:text-[#0d0d0d] flex items-center gap-0.5 cursor-pointer font-normal underline"
+              >
+                <RotateCcw className="w-3 h-3" />
+                이전으로
+              </button>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
               {ENERGY_OPTIONS.map((item, i) => (
@@ -1038,19 +1027,6 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                 <ArrowUp className="w-4 h-4 stroke-[2.5]" />
               </button>
             </div>
-
-            {flowStep === 'pre_photo_chat' && photoFeedbackCount === 0 && !isLoading && (
-              <div className="flex justify-end pr-2">
-                <button
-                  type="button"
-                  onClick={handleBackToOccupation}
-                  className="text-[11px] text-neutral-400 hover:text-[#0d0d0d] flex items-center gap-0.5 cursor-pointer underline"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  직업 다시 선택하기
-                </button>
-              </div>
-            )}
 
             {flowStep === 'chat_worry' && worryTurnCount <= 1 && !isLoading && (
               <div className="flex justify-end pr-2">

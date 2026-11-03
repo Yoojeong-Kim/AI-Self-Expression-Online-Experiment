@@ -68,15 +68,17 @@ export async function POST(req: NextRequest) {
 
     const ai = new GoogleGenAI({ apiKey });
     const userCleanName = cleanNickname(nickname);
+    const hasCustomName = nickname && nickname !== '친구' && userCleanName !== '친구';
+    const callRef = hasCustomName ? userCleanName : '너';
 
     let stageContext = '';
 
     if (stage === 'photo_feedback') {
       const isLastPhotoTurn = turnCount >= 2;
       if (isLastPhotoTurn) {
-        stageContext = `지금은 내 셀피 사진을 보여준 뒤 나누는 두 번째(마지막) 대화야. ${userCleanName}의 말에 기분 좋게 고마워하며 맞장구치되, 새로운 질문은 하지 말고 기분 좋게 두 문장으로 대화를 마무리해.`;
+        stageContext = `지금은 내 셀피 사진을 보여준 뒤 나누는 두 번째(마지막) 대화야. 상대방(${callRef})의 말에 기분 좋게 고마워하며 맞장구치되, 새로운 질문은 하지 말고 기분 좋게 두 문장으로 대화를 마무리해.`;
       } else {
-        stageContext = `지금은 내 셀피 사진을 보여준 뒤 나누는 첫 번째 대화야. ${userCleanName}가 내 외모나 옷 스타일, 분위기에 대해 한 말에 기분 좋게 웃으며("칭찬 고마워 ㅎㅎ", "나 이 스타일 좋아하거든!" 등) 반응한 뒤, 사진 속 스타일이나 평소 ${userCleanName}가 좋아하는 스타일에 대해 가벼운 질문을 딱 한 개만 건네줘.`;
+        stageContext = `지금은 내 셀피 사진을 보여준 뒤 나누는 첫 번째 대화야. 상대방(${callRef})이 내 외모나 옷 스타일, 분위기에 대해 한 말에 기분 좋게 웃으며("칭찬 고마워 ㅎㅎ", "나 이 스타일 좋아하거든!" 등) 반응한 뒤, 사진 속 스타일이나 평소 상대방이 좋아하는 스타일에 대해 가벼운 질문을 딱 한 개만 건네줘.`;
       }
     } else if (stage === 'daily_status') {
       stageContext = `${userCleanName}(만 ${age}세, ${occupation})가 요즘 일상 컨디션이 "${energyState || '바쁜 일상'}" 상태라고 했어. ${occupation}의 현실에 100% 맞장구치며 "진짜 기 빨렸겠다 ㅠㅠ", "완전 공감해"처럼 질문 없이 따뜻한 공감과 위로만 두 문장으로 말해줘.`;
