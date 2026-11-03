@@ -74,6 +74,15 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   const [ageDraft, setAgeDraft] = useState<string>(
     String(userAge && userAge >= 19 && userAge <= 24 ? userAge : 21)
   );
+
+  // Sync with pre-survey values so the user's Page 1 selections are pre-highlighted and pre-filled
+  useEffect(() => {
+    if (gender) setChatGender(gender);
+    if (userAge && userAge >= 19 && userAge <= 24) {
+      setChatAge(userAge);
+      setAgeDraft(String(userAge));
+    }
+  }, [gender, userAge]);
   const [nickname, setNickname] = useState<string>('');
   const [nicknameDraft, setNicknameDraft] = useState<string>('');
   const [chatOccupation, setChatOccupation] = useState<string>(userOccupation || '');
@@ -697,7 +706,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
 
         {/* Dynamic Interactive Bottom Control Area */}
         <div className="p-3.5 border-t border-slate-100 bg-white">
-          {/* 1-1. 성별 선택 */}
+          {/* 1-1. 성별 선택 (앞 페이지에서 선택한 성별에 색상 하이라이트 표시) */}
           {flowStep === 'ask_gender' && (
             <div className="space-y-2">
               <div className="text-xs font-bold text-slate-600 px-1">
@@ -707,14 +716,22 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                 <button
                   type="button"
                   onClick={() => handleGenderSelect('female')}
-                  className="py-3 px-4 rounded-xl border border-indigo-100 bg-indigo-50/70 hover:bg-indigo-600 hover:text-white text-indigo-950 font-bold text-xs sm:text-sm transition-all cursor-pointer"
+                  className={`py-3 px-4 rounded-xl border font-bold text-xs sm:text-sm transition-all cursor-pointer ${
+                    chatGender === 'female'
+                      ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-200'
+                      : 'border-slate-200 bg-white hover:bg-indigo-50 text-slate-700'
+                  }`}
                 >
                   👧 여성
                 </button>
                 <button
                   type="button"
                   onClick={() => handleGenderSelect('male')}
-                  className="py-3 px-4 rounded-xl border border-indigo-100 bg-indigo-50/70 hover:bg-indigo-600 hover:text-white text-indigo-950 font-bold text-xs sm:text-sm transition-all cursor-pointer"
+                  className={`py-3 px-4 rounded-xl border font-bold text-xs sm:text-sm transition-all cursor-pointer ${
+                    chatGender === 'male'
+                      ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-200'
+                      : 'border-slate-200 bg-white hover:bg-indigo-50 text-slate-700'
+                  }`}
                 >
                   👦 남성
                 </button>
@@ -722,11 +739,11 @@ export const StepChat2: React.FC<StepChat2Props> = ({
             </div>
           )}
 
-          {/* 1-2. 나이 입력 (19~24세 제한, 상하 화살표 조절) */}
+          {/* 1-2. 나이 입력 (앞 페이지에서 선택한 나이로 기본 세팅 + 상하 화살표 조절) */}
           {flowStep === 'ask_age' && (
             <form onSubmit={handleAgeSubmit} className="space-y-2">
               <div className="text-xs font-bold text-slate-600 px-1 flex items-center justify-between">
-                <span>💬 만 나이를 선택해 주세요 (만 19~24세):</span>
+                <span>💬 만 나이를 입력해 주세요:</span>
                 <button
                   type="button"
                   onClick={handleBackToGender}
@@ -737,8 +754,8 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                 </button>
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-indigo-200 bg-white">
-                  <span className="text-xs sm:text-sm font-bold text-slate-600">만</span>
+                <div className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl border-2 border-indigo-500 bg-indigo-50/40">
+                  <span className="text-xs sm:text-sm font-bold text-slate-700">만</span>
                   <input
                     type="number"
                     min={19}
@@ -764,9 +781,9 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                       else if (num > 24) setAgeDraft('24');
                     }}
                     autoFocus
-                    className="w-16 text-center font-extrabold text-indigo-600 text-sm sm:text-base border-b border-indigo-300 focus:outline-none"
+                    className="w-16 text-center font-extrabold text-indigo-700 text-sm sm:text-base border-b-2 border-indigo-500 focus:outline-none bg-transparent"
                   />
-                  <span className="text-xs sm:text-sm font-bold text-slate-600">세</span>
+                  <span className="text-xs sm:text-sm font-bold text-slate-700">세</span>
                 </div>
                 <button
                   type="submit"

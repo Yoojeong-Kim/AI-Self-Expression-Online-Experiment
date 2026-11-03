@@ -99,7 +99,7 @@ export const StepDemographics2: React.FC<StepDemographics2Props> = ({
           <div className="p-4 sm:p-5 rounded-2xl border border-slate-200/90 bg-slate-50/50 space-y-3">
             <label className="block text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5">
               <Calendar className="w-4 h-4 text-indigo-600" />
-              <span>2. 귀하의 만 나이를 선택해 주세요 (만 19~24세).</span>
+              <span>2. 귀하의 만 나이를 입력해 주세요.</span>
             </label>
             <div className="flex items-center justify-center gap-3 py-2.5 bg-white rounded-xl border border-slate-200 px-4">
               <span className="text-sm sm:text-base font-bold text-slate-700">만</span>
