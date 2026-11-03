@@ -183,7 +183,13 @@ export default function Study2Page() {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans text-[#0d0d0d] ${currentStep === 'chat' ? 'bg-white' : 'bg-[#f9f9f9]'}`}>
+    <div
+      className={
+        currentStep === 'chat'
+          ? 'h-dvh overflow-hidden bg-[#f4f4f4] flex flex-col items-center justify-center sm:p-4 font-sans text-[#0d0d0d]'
+          : 'min-h-screen bg-[#f9f9f9] flex flex-col font-sans text-[#0d0d0d]'
+      }
+    >
       {currentStep !== 'chat' && (
         <Header
           language={language}
@@ -194,7 +200,7 @@ export default function Study2Page() {
         />
       )}
 
-      <main className={`flex-1 ${currentStep === 'chat' ? 'py-2 sm:py-4' : 'py-4 sm:py-6'}`}>
+      <main className={currentStep === 'chat' ? 'w-full h-full flex items-center justify-center' : 'flex-1 py-4 sm:py-6'}>
         {/* Step 1: Pre-Demographics (Gender, Age, Occupation) */}
         {currentStep === 'demographics' && (
           <StepDemographics2
