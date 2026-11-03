@@ -236,24 +236,21 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     setFlowStep('ask_gender');
   };
 
-  // 1-2. 나이 입력
-  const handleAgeSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const parsed = parseInt(ageDraft.trim(), 10);
-    const validAge = !isNaN(parsed) && parsed >= 14 && parsed <= 40 ? parsed : chatAge || 21;
-    setChatAge(validAge);
+  // 1-2. 나이 선택 (만 19~24세 제한)
+  const handleAgeSelect = (selectedAge: number) => {
+    setChatAge(selectedAge);
 
     const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const userMsg: ChatMessage = {
       id: 'u-age-' + Date.now(),
       sender: 'user',
-      text: `만 ${validAge}살`,
+      text: `만 ${selectedAge}살`,
       timestamp: nowStr,
     };
     const aiMsg: ChatMessage = {
       id: 'ai-ask-nick-' + Date.now(),
       sender: 'ai',
-      text: `만 ${validAge}살이구나! 우리 편하게 부를 수 있게 네 이름이나 별명 알려줄래?`,
+      text: `만 ${selectedAge}살이구나! 우리 편하게 부를 수 있게 네 이름이나 별명 알려줄래?`,
       timestamp: nowStr,
     };
 
@@ -714,11 +711,11 @@ export const StepChat2: React.FC<StepChat2Props> = ({
             </div>
           )}
 
-          {/* 1-2. 나이 입력 */}
+          {/* 1-2. 나이 선택 (만 19~24세 버튼) */}
           {flowStep === 'ask_age' && (
-            <form onSubmit={handleAgeSubmit} className="space-y-2">
+            <div className="space-y-2">
               <div className="text-xs font-bold text-slate-600 px-1 flex items-center justify-between">
-                <span>💬 만 나이를 입력해 주세요:</span>
+                <span>💬 만 나이를 선택해 주세요 (만 19~24세):</span>
                 <button
                   type="button"
                   onClick={handleBackToGender}
@@ -728,29 +725,23 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                   이전으로
                 </button>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-indigo-200 bg-white">
-                  <span className="text-xs sm:text-sm font-bold text-slate-600">만</span>
-                  <input
-                    type="number"
-                    min={14}
-                    max={35}
-                    value={ageDraft}
-                    onChange={(e) => setAgeDraft(e.target.value)}
-                    placeholder="21"
-                    autoFocus
-                    className="w-16 text-center font-extrabold text-indigo-600 text-sm sm:text-base border-b border-indigo-300 focus:outline-none"
-                  />
-                  <span className="text-xs sm:text-sm font-bold text-slate-600">세</span>
-                </div>
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm cursor-pointer shadow-xs"
-                >
-                  확인
-                </button>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                {[19, 20, 21, 22, 23, 24].map((age) => (
+                  <button
+                    key={age}
+                    type="button"
+                    onClick={() => handleAgeSelect(age)}
+                    className={`py-2.5 px-2 rounded-xl border font-bold text-xs transition-all cursor-pointer text-center ${
+                      chatAge === age
+                        ? 'border-indigo-400 bg-indigo-100 text-indigo-950 hover:bg-indigo-600 hover:text-white'
+                        : 'border-indigo-100 bg-indigo-50/70 hover:bg-indigo-600 hover:text-white text-indigo-950'
+                    }`}
+                  >
+                    만 {age}세
+                  </button>
+                ))}
               </div>
-            </form>
+            </div>
           )}
 
           {/* 1-3. 호칭 입력 */}
