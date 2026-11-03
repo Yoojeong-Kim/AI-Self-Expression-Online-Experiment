@@ -3,7 +3,7 @@
 import React from 'react';
 import { Language, Step, ExperimentGroup, ExperimentCondition } from '@/types/experiment';
 import { translations } from '@/data/locales';
-import { Globe, CheckCircle2, Circle } from 'lucide-react';
+import { Globe, CheckCircle2 } from 'lucide-react';
 
 interface HeaderProps {
   language: Language;
@@ -12,6 +12,7 @@ interface HeaderProps {
   participantId?: string;
   group?: ExperimentGroup;
   condition?: ExperimentCondition;
+  hideLanguageToggle?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -21,6 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
   participantId,
   group,
   condition,
+  hideLanguageToggle = false,
 }) => {
   const t = translations[language];
 
@@ -99,31 +101,33 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Language Selector */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200">
-            <Globe className="w-4 h-4 text-slate-500 ml-1.5 mr-1" />
-            <button
-              onClick={() => onLanguageChange('ko')}
-              className={`px-2 py-0.5 text-xs rounded font-medium transition-colors ${
-                language === 'ko'
-                  ? 'bg-white text-indigo-600 shadow-xs font-bold'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              한국어
-            </button>
-            <button
-              onClick={() => onLanguageChange('en')}
-              className={`px-2 py-0.5 text-xs rounded font-medium transition-colors ${
-                language === 'en'
-                  ? 'bg-white text-indigo-600 shadow-xs font-bold'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              English
-            </button>
+        {!hideLanguageToggle && (
+          <div className="flex items-center gap-2">
+            <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200">
+              <Globe className="w-4 h-4 text-slate-500 ml-1.5 mr-1" />
+              <button
+                onClick={() => onLanguageChange('ko')}
+                className={`px-2 py-0.5 text-xs rounded font-medium transition-colors ${
+                  language === 'ko'
+                    ? 'bg-white text-indigo-600 shadow-xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                한국어
+              </button>
+              <button
+                onClick={() => onLanguageChange('en')}
+                className={`px-2 py-0.5 text-xs rounded font-medium transition-colors ${
+                  language === 'en'
+                    ? 'bg-white text-indigo-600 shadow-xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                English
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </header>
   );

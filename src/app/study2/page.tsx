@@ -197,6 +197,7 @@ export default function Study2Page() {
           currentStep={currentStep}
           condition={participant.condition}
           participantId={participant.id}
+          hideLanguageToggle={true}
         />
       )}
 
