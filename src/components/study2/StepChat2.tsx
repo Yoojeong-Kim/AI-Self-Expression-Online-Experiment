@@ -667,10 +667,10 @@ export const StepChat2: React.FC<StepChat2Props> = ({
               <button
                 type="button"
                 onClick={() => handleGenderSelect('female')}
-                className={`py-2.5 px-4 rounded-xl border font-bold text-xs sm:text-sm transition-all cursor-pointer ${
+                className={`py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer ${
                   chatGender === 'female'
-                    ? 'border-[#0d0d0d] bg-[#0d0d0d] text-white shadow-xs'
-                    : 'border-neutral-200 bg-white hover:bg-neutral-100 text-[#0d0d0d]'
+                    ? 'border-2 border-[#0d0d0d] bg-neutral-200/60 text-[#0d0d0d] hover:bg-[#0d0d0d] hover:text-white'
+                    : 'border border-neutral-200 bg-white text-neutral-500 hover:bg-[#0d0d0d] hover:text-white hover:border-[#0d0d0d]'
                 }`}
               >
                 👧 여성
@@ -678,10 +678,10 @@ export const StepChat2: React.FC<StepChat2Props> = ({
               <button
                 type="button"
                 onClick={() => handleGenderSelect('male')}
-                className={`py-2.5 px-4 rounded-xl border font-bold text-xs sm:text-sm transition-all cursor-pointer ${
+                className={`py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer ${
                   chatGender === 'male'
-                    ? 'border-[#0d0d0d] bg-[#0d0d0d] text-white shadow-xs'
-                    : 'border-neutral-200 bg-white hover:bg-neutral-100 text-[#0d0d0d]'
+                    ? 'border-2 border-[#0d0d0d] bg-neutral-200/60 text-[#0d0d0d] hover:bg-[#0d0d0d] hover:text-white'
+                    : 'border border-neutral-200 bg-white text-neutral-500 hover:bg-[#0d0d0d] hover:text-white hover:border-[#0d0d0d]'
                 }`}
               >
                 👦 남성
