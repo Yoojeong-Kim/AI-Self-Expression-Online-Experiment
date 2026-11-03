@@ -750,7 +750,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
         {flowStep === 'ask_nickname' && (
           <form onSubmit={handleNicknameSubmit} className="p-3 rounded-2xl bg-[#f4f4f4] border border-neutral-200/80 space-y-2">
             <div className="text-xs font-semibold text-neutral-600 px-1 flex items-center justify-between">
-              <span>AI 친구가 부를 이름(또는 별명)을 적어주세요</span>
+              <span>AI 친구가 부를 당신의 이름을 적어주세요.</span>
               <button
                 type="button"
                 onClick={handleBackToAge}
@@ -763,7 +763,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
             <div className="flex gap-2">
               <input
                 type="text"
-                placeholder="예: 유정"
+                placeholder="내 이름이나 별명"
                 maxLength={15}
                 value={nicknameDraft}
                 onChange={(e) => setNicknameDraft(e.target.value)}
