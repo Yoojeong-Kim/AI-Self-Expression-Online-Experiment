@@ -27,8 +27,8 @@ function parseStudy2Condition(condParam: string, genderParam: string) {
     c = ALL_8_CONDITIONS[Math.floor(Math.random() * ALL_8_CONDITIONS.length)];
   }
 
-  // 1. 자극물 이미지 타입 (A vs B)
-  const imageType: ImageType = c.toUpperCase().includes('B') ? 'B' : 'A';
+  // 1. 자극물 이미지 타입 (A: Posed vs B: Candid)
+  const imageType: ImageType = (c.toUpperCase().includes('B') || c.toLowerCase().includes('candid')) ? 'B' : 'A';
 
   // 2. 사진 노출 시점 (pre vs mid)
   const timing: DisclosureTiming = c.toLowerCase().includes('pre') ? 'pre' : 'mid';
