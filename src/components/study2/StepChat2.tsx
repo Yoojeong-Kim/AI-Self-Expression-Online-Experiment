@@ -582,10 +582,10 @@ export const StepChat2: React.FC<StepChat2Props> = ({
               key={msg.id}
               className="flex justify-start animate-in fade-in duration-150"
             >
-              <div className="max-w-[88%] space-y-2">
-                <p className="whitespace-pre-wrap text-xs sm:text-[14px] leading-6 text-[#0d0d0d]">
-                  {cleanText}
-                </p>
+              <div className="max-w-[85%] space-y-2">
+                <div className="bg-white border border-neutral-200/90 text-[#0d0d0d] px-4 py-2.5 rounded-2xl sm:rounded-3xl text-xs sm:text-[14px] leading-relaxed shadow-2xs">
+                  <p className="whitespace-pre-wrap">{cleanText}</p>
+                </div>
 
                 {/* Image Stimulus (스크롤 없이 한눈에 들어오는 컴팩트한 비율) */}
                 {msg.imageUrl && (
@@ -604,10 +604,14 @@ export const StepChat2: React.FC<StepChat2Props> = ({
           );
         })}
 
-        {/* Pulsing Dot Loading Indicator */}
+        {/* Pulsing Dot Loading Indicator in Speech Bubble */}
         {isLoading && (
-          <div className="flex items-center py-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#0d0d0d] animate-pulse" />
+          <div className="flex justify-start animate-in fade-in duration-150">
+            <div className="bg-white border border-neutral-200/90 px-3.5 py-2 rounded-2xl flex items-center gap-1.5 shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-neutral-400 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-neutral-400 animate-pulse [animation-delay:200ms]" />
+              <span className="w-2 h-2 rounded-full bg-neutral-400 animate-pulse [animation-delay:400ms]" />
+            </div>
           </div>
         )}
 
