@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { StepInstructions2 } from '@/components/study2/StepInstructions2';
 import { StepChat2 } from '@/components/study2/StepChat2';
 import { StepSurvey } from '@/components/StepSurvey';
 import { StepComplete } from '@/components/StepComplete';
@@ -56,8 +57,8 @@ function parseStudy2Condition(condParam: string, genderParam: string) {
 export default function Study2Page() {
   const [mounted, setMounted] = useState<boolean>(false);
   const [language, setLanguage] = useState<Language>('ko');
-  // 사전 설문 없이 채팅방으로 즉시 직행!
-  const [currentStep, setCurrentStep] = useState<Step>('chat');
+  // 1, 2, 3 대화 진행 안내 후 시작하기 누르면 채팅방 입장
+  const [currentStep, setCurrentStep] = useState<Step>('instructions');
 
   const [participant, setParticipant] = useState<ParticipantInfo | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -183,8 +184,13 @@ export default function Study2Page() {
           : 'min-h-screen bg-[#f9f9f9] flex flex-col font-sans text-[#0d0d0d]'
       }
     >
-      <main className={currentStep === 'chat' ? 'w-full h-full flex items-center justify-center' : 'flex-1 py-6 sm:py-10'}>
-        {/* Step 1: Interactive Turn-based & Button Chat (사전질문 없이 바로 진입) */}
+      <main className={currentStep === 'chat' ? 'w-full h-full flex items-center justify-center' : 'flex-1 flex items-center justify-center py-6 sm:py-10'}>
+        {/* Step 0: Instructions (1, 2, 3 안내 후 대화 시작) */}
+        {currentStep === 'instructions' && (
+          <StepInstructions2 onStart={() => setCurrentStep('chat')} />
+        )}
+
+        {/* Step 1: Interactive Turn-based & Button Chat */}
         {currentStep === 'chat' && (
           <StepChat2
             language={language}
