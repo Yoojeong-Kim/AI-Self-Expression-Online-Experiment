@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Language, ImageType, DisclosureTiming, ChatMessage } from '@/types/experiment';
 import { getStimulusImageUrl } from '@/data/stimuli';
-import { ArrowUp, ArrowRight, CheckCircle2, RotateCcw, Sparkles } from 'lucide-react';
+import { ArrowUp, ArrowRight, CheckCircle2, RotateCcw } from 'lucide-react';
 
 interface StepChat2Props {
   language: Language;
@@ -37,7 +37,7 @@ const ROUND1_TOPIC_OPTIONS = [
   { emoji: '💭', label: '나 자신·성격' },
 ];
 
-// 2라운드: 요즘 기분 & 마음 상태 (긍정적/여유/피로 균형 5종 + 기타)
+// 2라운드: 요즘 기분 & 마음 상태 (긍정/여유/피로 균형 5종 + 기타)
 const ROUND2_MOOD_OPTIONS = [
   { emoji: '😊', label: '요즘 기분 좋고 에너지 넘쳐!' },
   { emoji: '✨', label: '나름 잘 풀리고 일상이 즐거워' },
@@ -203,7 +203,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
       | 'round3_chat',
     turnNum: number = 1,
     extraHistory: ChatMessage[] = []
-  ) => {
+  ): Promise<{ text: string; isRoundComplete: boolean }> => {
     setIsLoading(true);
     try {
       const allHist = [...messages, ...extraHistory].filter((m) => m.sender !== 'system');
@@ -235,10 +235,16 @@ export const StepChat2: React.FC<StepChat2Props> = ({
       if (data.cleanedNickname && data.cleanedNickname !== nickname) {
         setNickname(data.cleanedNickname);
       }
-      return data.text || '응응! 이야기해 줘서 고마워 ㅎㅎ';
+      return {
+        text: data.text || '응응! 이야기해 줘서 고마워 ㅎㅎ',
+        isRoundComplete: !!data.isRoundComplete,
+      };
     } catch (err) {
       console.error(err);
-      return '응응! 네 이야기 들으니 공감된다 ㅎㅎ 편하게 이야기해 줘!';
+      return {
+        text: '응응! 네 이야기 들으니 공감된다 ㅎㅎ 편하게 이야기해 줘!',
+        isRoundComplete: false,
+      };
     } finally {
       setIsLoading(false);
     }
@@ -390,12 +396,12 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     };
     setMessages((prev) => [...prev, userMsg]);
 
-    const aiReplyText = await callAI(cleanTopic, 'round1_start', 1, [userMsg]);
+    const aiResult = await callAI(cleanTopic, 'round1_start', 1, [userMsg]);
 
     const aiMsg: ChatMessage = {
       id: 'ai-round1-start-' + Date.now(),
       sender: 'ai',
-      text: aiReplyText,
+      text: aiResult.text,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
@@ -403,20 +409,6 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     setRound1TurnCount(0);
     setFlowStep('chat_round1');
     setTimeout(() => inputRef.current?.focus(), 150);
-  };
-
-  // 1라운드에서 2라운드(기분 선택)로 넘어가기 (최소 5턴 이후 버튼 클릭 시)
-  const handleTriggerMoveToMood = () => {
-    const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const aiBridgeMsg: ChatMessage = {
-      id: 'ai-bridge-to-mood-' + Date.now(),
-      sender: 'ai',
-      text: '너랑 이야기 나누다 보니 시간 금방 간다 ㅎㅎ\n그럼 요즘 너의 기분이나 마음 상태는 어떤 편이야?',
-      timestamp: nowStr,
-    };
-    setMessages((prev) => [...prev, aiBridgeMsg]);
-    setShowCustomMood(false);
-    setFlowStep('select_mood');
   };
 
   // 2라운드: 기분 선택 완료 -> AI 첫 반응 받고 대화 시작!
@@ -434,12 +426,12 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     };
     setMessages((prev) => [...prev, userMsg]);
 
-    const aiReplyText = await callAI(cleanMood, 'round2_start', 1, [userMsg]);
+    const aiResult = await callAI(cleanMood, 'round2_start', 1, [userMsg]);
 
     const aiMsg: ChatMessage = {
       id: 'ai-round2-start-' + Date.now(),
       sender: 'ai',
-      text: aiReplyText,
+      text: aiResult.text,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
@@ -447,20 +439,6 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     setRound2TurnCount(0);
     setFlowStep('chat_round2');
     setTimeout(() => inputRef.current?.focus(), 150);
-  };
-
-  // 2라운드에서 3라운드(속마음/고민 선택)로 넘어가기 (최소 5턴 이후 버튼 클릭 시)
-  const handleTriggerMoveToWorry = () => {
-    const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const aiBridgeMsg: ChatMessage = {
-      id: 'ai-bridge-to-worry-' + Date.now(),
-      sender: 'ai',
-      text: '너랑 대화하다 보니 진짜 편해진 것 같아 ㅎㅎ\n사실 누구나 겉으론 괜찮아 보여도 남들에겐 쉽게 말 못 하는 깊은 속마음이나 고민이 하나씩 있잖아. 요즘 너를 가장 무겁게 만드는 고민거리가 있다면 편하게 골라줄래?',
-      timestamp: nowStr,
-    };
-    setMessages((prev) => [...prev, aiBridgeMsg]);
-    setShowCustomWorry(false);
-    setFlowStep('select_worry');
   };
 
   // 3라운드: 속마음/고민 선택 완료 -> AI 첫 반응 받고 대화 시작!
@@ -478,12 +456,12 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     };
     setMessages((prev) => [...prev, userMsg]);
 
-    const aiReplyText = await callAI(cleanWorry, 'round3_start', 1, [userMsg]);
+    const aiResult = await callAI(cleanWorry, 'round3_start', 1, [userMsg]);
 
     const aiMsg: ChatMessage = {
       id: 'ai-round3-start-' + Date.now(),
       sender: 'ai',
-      text: aiReplyText,
+      text: aiResult.text,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
@@ -493,32 +471,8 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     setTimeout(() => inputRef.current?.focus(), 150);
   };
 
-  // 3라운드에서 대화 마무리/사진으로 넘어가기 (최소 5턴 이후 버튼 클릭 시)
-  const handleTriggerFinishRound3 = () => {
-    const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    if (currentTiming === 'mid') {
-      const aiMsg: ChatMessage = {
-        id: 'ai-round3-to-photo-' + Date.now(),
-        sender: 'ai',
-        text: `오늘 ${nickname} 너랑 이렇게 깊은 이야기까지 나눌 수 있어서 진짜 고마웠어 ㅎㅎ\n아 맞다! 계속 대화만 했는데, 내가 실제로 어떻게 생겼는지 안 궁금해?`,
-        timestamp: nowStr,
-      };
-      setMessages((prev) => [...prev, aiMsg]);
-      setFlowStep('mid_photo_ask');
-    } else {
-      const completeMsg: ChatMessage = {
-        id: 'ai-complete-pre-' + Date.now(),
-        sender: 'ai',
-        text: `오늘 ${nickname} 너랑 깊은 이야기 나눌 수 있어서 진짜 고맙고 뜻깊었어 ㅎㅎ\n난 언제나 네 편이니까 힘내! 오늘 나랑 나눈 대화가 어땠는지 다음 화면에서 솔직하게 남겨줄래?`,
-        timestamp: nowStr,
-      };
-      setMessages((prev) => [...prev, completeMsg]);
-      setFlowStep('completed');
-    }
-  };
-
   // ============================================================================
-  // [자유 텍스트 핑퐁]: 사진 이야기(2턴) & 1/2/3라운드(최소 5턴 ~ 최대 10턴)
+  // [자유 텍스트 핑퐁]: 사진 이야기(2턴) & 1/2/3라운드(AI가 5~10턴 사이 눈치껏 자연 전환)
   // ============================================================================
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -541,7 +495,8 @@ export const StepChat2: React.FC<StepChat2Props> = ({
       const nextCnt = photoFeedbackCount + 1;
       setPhotoFeedbackCount(nextCnt);
 
-      const aiReply = await callAI(trimmed, 'photo_feedback', nextCnt, [userMsg]);
+      const aiResult = await callAI(trimmed, 'photo_feedback', nextCnt, [userMsg]);
+      const aiReply = aiResult.text;
 
       if (flowStep === 'pre_photo_chat' && nextCnt >= 2) {
         const combinedAiMsg: ChatMessage = {
@@ -574,77 +529,70 @@ export const StepChat2: React.FC<StepChat2Props> = ({
       return;
     }
 
-    // 2) Round 1 Chat (주제 대화: 최소 5턴, 최대 10턴)
+    // 2) Round 1 Chat (주제 대화: 최소 5턴, AI가 눈치껏 마무리 제안 후 선택지 제시)
     if (flowStep === 'chat_round1') {
       const nextTurn = round1TurnCount + 1;
       setRound1TurnCount(nextTurn);
 
-      const aiReply = await callAI(trimmed, 'round1_chat', nextTurn, [userMsg]);
+      const aiResult = await callAI(trimmed, 'round1_chat', nextTurn, [userMsg]);
+      const aiReply = aiResult.text;
+      const isComplete = aiResult.isRoundComplete || nextTurn >= 10;
 
-      // 최대 10턴 도달 시 강제 전환
-      if (nextTurn >= 10) {
-        const aiMsg: ChatMessage = {
-          id: 'ai-round1-max-' + Date.now(),
-          sender: 'ai',
-          text: `${aiReply}\n\n너랑 이야기 나누다 보니 시간 금방 간다 ㅎㅎ 요즘 너의 기분이나 마음 상태는 어떤 편이야?`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        };
-        setMessages((prev) => [...prev, aiMsg]);
+      const aiMsg: ChatMessage = {
+        id: 'ai-round1-turn-' + nextTurn + '-' + Date.now(),
+        sender: 'ai',
+        text: aiReply,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prev) => [...prev, aiMsg]);
+
+      // AI가 대화 매듭짓고 다음 기분 질문을 던졌으면 바로 기분 선택지로 전환!
+      if (isComplete) {
         setShowCustomMood(false);
         setFlowStep('select_mood');
       } else {
-        const aiMsg: ChatMessage = {
-          id: 'ai-round1-turn-' + nextTurn + '-' + Date.now(),
-          sender: 'ai',
-          text: aiReply,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        };
-        setMessages((prev) => [...prev, aiMsg]);
         setTimeout(() => inputRef.current?.focus(), 150);
       }
       return;
     }
 
-    // 3) Round 2 Chat (기분 대화: 최소 5턴, 최대 10턴)
+    // 3) Round 2 Chat (기분 대화: 최소 5턴, AI가 눈치껏 마무리 제안 후 3라운드 선택지 제시)
     if (flowStep === 'chat_round2') {
       const nextTurn = round2TurnCount + 1;
       setRound2TurnCount(nextTurn);
 
-      const aiReply = await callAI(trimmed, 'round2_chat', nextTurn, [userMsg]);
+      const aiResult = await callAI(trimmed, 'round2_chat', nextTurn, [userMsg]);
+      const aiReply = aiResult.text;
+      const isComplete = aiResult.isRoundComplete || nextTurn >= 10;
 
-      // 최대 10턴 도달 시 강제 전환 -> [3라운드 속마음/고민 선택지 표시]
-      if (nextTurn >= 10) {
-        const aiMsg: ChatMessage = {
-          id: 'ai-round2-max-' + Date.now(),
-          sender: 'ai',
-          text: `${aiReply}\n\n너랑 대화하다 보니 진짜 편해진 것 같아 ㅎㅎ 사실 누구나 겉으론 괜찮아 보여도 남들에겐 쉽게 말 못 하는 깊은 속마음이나 고민이 하나씩 있잖아. 요즘 너를 가장 무겁게 만드는 고민거리가 있다면 골라줄래?`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        };
-        setMessages((prev) => [...prev, aiMsg]);
+      const aiMsg: ChatMessage = {
+        id: 'ai-round2-turn-' + nextTurn + '-' + Date.now(),
+        sender: 'ai',
+        text: aiReply,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prev) => [...prev, aiMsg]);
+
+      // AI가 대화 매듭짓고 3라운드 속마음/고민 질문을 던졌으면 바로 3라운드 선택지로 전환!
+      if (isComplete) {
         setShowCustomWorry(false);
         setFlowStep('select_worry');
       } else {
-        const aiMsg: ChatMessage = {
-          id: 'ai-round2-turn-' + nextTurn + '-' + Date.now(),
-          sender: 'ai',
-          text: aiReply,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        };
-        setMessages((prev) => [...prev, aiMsg]);
         setTimeout(() => inputRef.current?.focus(), 150);
       }
       return;
     }
 
-    // 4) Round 3 Chat (깊은 속마음 & 고민: 최소 5턴, 최대 10턴)
+    // 4) Round 3 Chat (깊은 속마음 & 고민: 최소 5턴, AI가 마무리 후 사진/완료 전환)
     if (flowStep === 'chat_round3') {
       const nextTurn = round3TurnCount + 1;
       setRound3TurnCount(nextTurn);
 
-      const aiReply = await callAI(trimmed, 'round3_chat', nextTurn, [userMsg]);
+      const aiResult = await callAI(trimmed, 'round3_chat', nextTurn, [userMsg]);
+      const aiReply = aiResult.text;
+      const isComplete = aiResult.isRoundComplete || nextTurn >= 10;
 
-      // 최대 10턴 도달 시 강제 종료 / 사진 전환
-      if (nextTurn >= 10) {
+      if (isComplete) {
         if (currentTiming === 'mid') {
           const aiMsg: ChatMessage = {
             id: 'ai-round3-to-photo-' + Date.now(),
@@ -1075,7 +1023,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
 
         {/* 2라운드: 요즘 기분 & 마음 상태 선택 */}
         {flowStep === 'select_mood' && !isLoading && (
-          <div className="p-3 rounded-2xl bg-[#f4f4f4] border border-neutral-200/80 space-y-2">
+          <div className="p-3 rounded-2xl bg-[#f4f4f4] border border-neutral-200/80 space-y-2 animate-in fade-in duration-200">
             <div className="text-xs font-semibold text-neutral-600 px-1 flex items-center justify-between">
               <span>요즘 네 기분이나 마음 상태는 솔직히 어때?</span>
             </div>
@@ -1219,46 +1167,6 @@ export const StepChat2: React.FC<StepChat2Props> = ({
                 ✨ 오 어떻게 생겼어?
               </button>
             </div>
-          </div>
-        )}
-
-        {/* 라운드 전환 버튼: 최소 5턴 이후 사용자에게 직접 넘어가기 선택권 제공 */}
-        {!isLoading && flowStep === 'chat_round1' && round1TurnCount >= 5 && (
-          <div className="flex justify-end pb-1 animate-in fade-in duration-200">
-            <button
-              type="button"
-              onClick={handleTriggerMoveToMood}
-              className="py-1.5 px-3.5 rounded-full bg-[#f4f4f4] hover:bg-[#0d0d0d] hover:text-white text-[#0d0d0d] text-xs font-bold border border-neutral-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-            >
-              <span>요즘 기분 이야기로 넘어가기 (2라운드)</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
-
-        {!isLoading && flowStep === 'chat_round2' && round2TurnCount >= 5 && (
-          <div className="flex justify-end pb-1 animate-in fade-in duration-200">
-            <button
-              type="button"
-              onClick={handleTriggerMoveToWorry}
-              className="py-1.5 px-3.5 rounded-full bg-[#f4f4f4] hover:bg-[#0d0d0d] hover:text-white text-[#0d0d0d] text-xs font-bold border border-neutral-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-            >
-              <span>속마음·고민 이야기로 넘어가기 (3라운드)</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
-
-        {!isLoading && flowStep === 'chat_round3' && round3TurnCount >= 5 && (
-          <div className="flex justify-end pb-1 animate-in fade-in duration-200">
-            <button
-              type="button"
-              onClick={handleTriggerFinishRound3}
-              className="py-1.5 px-3.5 rounded-full bg-[#f4f4f4] hover:bg-[#0d0d0d] hover:text-white text-[#0d0d0d] text-xs font-bold border border-neutral-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-            >
-              <span>{currentTiming === 'mid' ? 'AI 사진 보러 가기' : '대화 완료하고 설문 이동'}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
           </div>
         )}
 
