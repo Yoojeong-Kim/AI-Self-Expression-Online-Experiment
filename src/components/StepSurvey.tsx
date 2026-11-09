@@ -6,7 +6,7 @@ import { translations } from '@/data/locales';
 import { surveySections, allSurveyQuestions, SurveyQuestionItem } from '@/data/surveyQuestions';
 import { getStimulusImageUrl } from '@/data/stimuli';
 import { IOSScale } from '@/components/IOSScale';
-import { ArrowRight, AlertCircle, Sparkles, CheckCircle2, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { ArrowRight, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 
 interface StepSurveyProps {
   language: Language;
@@ -98,21 +98,14 @@ export const StepSurvey: React.FC<StepSurveyProps> = ({
                 className="w-full h-full object-cover block"
               />
             </div>
-            <span className="text-[11px] font-semibold text-slate-500 mt-2 flex items-center gap-1">
-              <ImageIcon className="w-3.5 h-3.5 text-indigo-600" />
-              {language === 'ko' ? '대화 중 챗봇이 보여준 사진' : 'Photo presented by chatbot'}
+            <span className="text-[12px] font-semibold text-slate-500 mt-2 text-center block">
+              {language === 'ko' ? 'AI 챗봇의 사진' : 'AI Chatbot Photo'}
             </span>
           </div>
 
           {/* Intro Text */}
           <div className="flex-1 space-y-3 text-center md:text-left">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>{language === 'ko' ? '1. 도입 안내' : '1. Introduction'}</span>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-800">
-              {language === 'ko' ? 'AI 챗봇의 시각적 자기표현 연구' : 'Study on Visual Self-Presentation of AI Chatbots'}
-            </h2>
+
             <div className="text-xs sm:text-sm text-slate-600 space-y-1.5 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
               <p>
                 {language === 'ko'
