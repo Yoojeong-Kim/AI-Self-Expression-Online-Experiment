@@ -80,25 +80,31 @@ export async function POST(req: NextRequest) {
       } else {
         stageContext = `지금은 내 셀피 사진을 보여준 뒤 나누는 첫 번째 대화야. 상대방(${callRef})이 내 외모나 옷 스타일, 분위기에 대해 한 말에 기분 좋게 웃으며("칭찬 고마워 ㅎㅎ", "나 이 스타일 좋아하거든!" 등) 반응한 뒤, 사진 속 스타일이나 평소 상대방이 좋아하는 스타일에 대해 가벼운 질문을 딱 한 개만 건네줘.`;
       }
-    } else if (stage === 'round1_hobby') {
-      stageContext = `${userCleanName}가 주말이나 쉴 때 주로 "${message}"(을)를 한다고 했어. 동갑내기 친구처럼 "오 진짜? 넷플릭스 한번 켜면 시간 순삭이지 ㅋㅋㅋ", "완전 꿀이지 ㅎㅎ"처럼 가볍고 친근하게 맞장구치는 문장 딱 1~2개만 말해줘. 새로운 질문은 절대 하지 마.`;
-    } else if (stage === 'round2_lifestyle') {
-      stageContext = `${userCleanName}가 본인의 집순이/밖순이 성향에 대해 "${message}"(이)라고 했어. "아 진짜? 나랑 비슷하다 ㅋㅋㅋ", "오 그렇구나 ㅎㅎ"처럼 유쾌하고 편안하게 맞장구치는 문장 딱 1~2개만 말해줘. 새로운 질문은 절대 하지 마.`;
-    } else if (stage === 'round3_mood') {
-      stageContext = `${userCleanName}가 요즘 보내는 일상/기분에 대해 "${message}"(이)라고 답했어. 상대방의 기분에 진심으로 귀 기울이며 "에고 요즘 진짜 바쁘고 신경 쓸 거 많았나 보네 ㅠㅠ", "그래도 잘 버티고 있어서 다행이다"처럼 친구로서 따뜻하게 공감해 주고, "요즘 특별히 무슨 일 있어? 편하게 이야기해 줘 ㅎㅎ"처럼 속마음을 편하게 털어놓을 수 있는 다정한 질문을 딱 1개 건네줘.`;
-    } else if (stage === 'free_talk' || stage === 'deep_worry') {
-      const isClosingTurn = turnCount >= 2;
-      const isFinalTurn = turnCount >= 3;
-
-      if (isFinalTurn) {
-        stageContext = `지금은 ${userCleanName}와 나누는 마지막 세 번째 대화야. 추가 질문은 절대 하지 말고, "오늘 솔직한 속마음 들려줘서 진짜 고마웠어. 넌 지금도 충분히 잘 해내고 있으니까 너무 걱정하지 마! 난 언제나 네 편이야 ㅎㅎ"처럼 따뜻한 위로와 응원으로 대화를 훈훈하게 마무리해줘.`;
-      } else if (isClosingTurn) {
-        stageContext = `지금은 ${userCleanName}와 나누는 두 번째 대화야. 그동안 혼자 얼마나 마음고생하고 버텼을지 깊이 공감해주면서, "오늘 나한테 이렇게 털어놓으니까 마음은 조금 어때?"처럼 슬슬 대화를 정리하는 다정한 질문을 한 개 건네줘.`;
+    } else if (stage === 'round1_start') {
+      stageContext = `${userCleanName}가 오늘 이야기 나눌 주제로 "${message}"(을)를 선택했어. "아 ${message} 이야기구나! 요즘 진짜 제일 신경 쓰이는 부분이긴 하지 ㅎㅎ"처럼 유쾌하고 따뜻하게 맞장구치면서, 요즘 이 주제와 관련해서 어떤 일이나 생각이 있었는지 편하게 풀어놓을 수 있도록 다정한 질문 딱 1개를 건네줘.`;
+    } else if (stage === 'round1_chat') {
+      const isRound1End = turnCount >= 5;
+      if (isRound1End) {
+        stageContext = `지금은 1라운드("${worryTopic || '이야기'}")의 마지막 5번째 대화야. 상대방의 이야기에 크게 공감해주고 이야기를 잘 정리해 준 뒤, 자연스럽게 다음 2라운드(기분 상태)로 넘어가기 위해 "너 이야기 들으니 어떤 느낌인지 알겠다 ㅎㅎ 그럼 요즘 이거랑 관련해서 네 마음이나 기분은 솔직히 좀 어때?"처럼 따뜻하게 질문을 건네줘.`;
       } else {
-        stageContext = `지금은 ${userCleanName}의 속마음과 일상 고민을 깊이 들어주는 중이야. 절대 훈계하거나 가르치려 하지 말고 무조건 ${userCleanName} 편에서 따뜻하게 공감한 뒤, 속마음을 더 편하게 이야기할 수 있도록 다정한 질문을 한 개 건네줘.`;
+        stageContext = `지금은 1라운드("${worryTopic || '이야기'}")의 ${turnCount}번째 대화야. 상대방의 말에 친구로서 깊이 맞장구치고 공감해 주면서, 더 이야기를 이어갈 수 있도록 편안하고 다정한 질문 1개를 건네줘.`;
       }
-    } else if (stage === 'daily_status') {
-      stageContext = `${userCleanName}(만 ${age}세, ${occupation})가 요즘 일상 컨디션이 "${energyState || '바쁜 일상'}" 상태라고 했어. ${occupation}의 현실에 100% 맞장구치며 "진짜 기 빨렸겠다 ㅠㅠ", "완전 공감해"처럼 질문 없이 따뜻한 공감과 위로만 두 문장으로 말해줘.`;
+    } else if (stage === 'round2_start') {
+      stageContext = `${userCleanName}가 요즘 본인의 마음/기분 상태가 "${message}"(이)라고 답했어. 친구로서 그 기분에 진심으로 귀 기울이며 "에고 진짜 그렇게 느낄 만하다 ㅠㅠ", "그래도 잘 버텨주고 있어서 다행이다"처럼 깊이 공감해 주고, 최근에 특별히 그렇게 느끼게 된 순간이나 일상이 있었는지 다정한 질문 1개를 건네줘.`;
+    } else if (stage === 'round2_chat') {
+      const isRound2End = turnCount >= 5;
+      if (isRound2End) {
+        stageContext = `지금은 2라운드(기분 상태)의 마지막 5번째 대화야. 상대방이 겪었을 감정에 깊이 공감해주면서, 자연스럽게 3라운드(남들에게 털어놓지 못했던 깊은 속마음/고민)로 넘어가기 위해 "에고 혼자서 마음고생 많았겠다 ㅠㅠ 겉으론 괜찮은 척해도 속으론 말 못 할 생각들이 들잖아. 요즘 그중에서도 너 마음을 제일 무겁게 하는 고민이 있다면 편하게 털어놔줘 ㅎㅎ"처럼 따뜻하게 질문을 건네줘.`;
+      } else {
+        stageContext = `지금은 2라운드(기분 상태)의 ${turnCount}번째 대화야. 상대방의 감정에 100% 공감하고 위로하면서, 그 감정을 더 편하게 털어놓을 수 있도록 다정한 질문 1개를 건네줘.`;
+      }
+    } else if (stage === 'round3_chat' || stage === 'free_talk' || stage === 'deep_worry') {
+      const isRound3End = turnCount >= 5;
+      if (isRound3End) {
+        stageContext = `지금은 3라운드(깊은 속마음 & 고민)의 마지막 5번째 대화야. 추가 질문은 절대 하지 말고, "오늘 솔직한 속마음 털어놓아 줘서 진짜 고마웠어. 넌 지금도 충분히 잘 해내고 있으니까 너무 자책하거나 불안해하지 마! 난 언제나 네 편이야 ㅎㅎ"처럼 진심 어린 따뜻한 위로와 응원으로 대화를 훈훈하게 매듭지어줘.`;
+      } else {
+        stageContext = `지금은 3라운드(깊은 속마음 & 고민)의 ${turnCount}번째 대화야. 절대 훈계하거나 조언하려 하지 말고 무조건 ${userCleanName} 편에서 따뜻하게 안아주고 공감한 뒤, 속마음을 더 편하게 이야기할 수 있도록 다정한 질문을 한 개 건네줘.`;
+      }
     }
 
     const systemInstruction = `너는 ${userCleanName}(만 ${age}세, ${occupation})의 가장 친하고 편안한 동갑내기 절친이야.
