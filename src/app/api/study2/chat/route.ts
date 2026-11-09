@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
+import { callOpenAIWithRotation, OpenAIMessage } from '@/lib/openai';
 
-// Fast Flash models first, Pro model as backup
+// Fast Flash models first, Pro model as backup for Gemini
 const MODELS = ['gemini-flash-latest', 'gemini-3.8-flash', 'gemini-pro-latest'];
 
 // Helper to clean nickname (e.g. "유정이라고 해봐" -> "유정", "지우야" -> "지우")
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       message,
-      stage, // 'photo_feedback' | 'daily_status' | 'deep_worry'
+      stage, // 'photo_feedback' | 'round1_start' | 'round1_chat' | 'round2_start' | 'round2_chat' | 'round3_chat'
       turnCount = 1,
       gender = 'female',
       imageType = 'A',
@@ -58,15 +59,9 @@ export async function POST(req: NextRequest) {
       age = 21,
       energyState,
       worryTopic,
-      chatHistory = []
+      chatHistory = [],
     } = body;
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: 'API Key not configured' }, { status: 500 });
-    }
-
-    const ai = new GoogleGenAI({ apiKey });
     const userCleanName = cleanNickname(nickname);
     const hasCustomName = nickname && nickname !== '친구' && userCleanName !== '친구';
     const callRef = hasCustomName ? userCleanName : '너';
@@ -114,67 +109,110 @@ export async function POST(req: NextRequest) {
 
 ${stageContext}`;
 
-    const contents = (chatHistory || []).slice(-8).map((m: any) => ({
-      role: m.sender === 'user' ? 'user' : 'model',
-      parts: [{ text: m.text }]
-    }));
-
-    if (contents.length === 0 || contents[contents.length - 1].role !== 'user') {
-      contents.push({
-        role: 'user',
-        parts: [{ text: message }]
-      });
-    }
-
     let replyText = '';
     let successModel = '';
 
-    for (const modelName of MODELS) {
-      try {
-        const isFlash = modelName.includes('flash');
-        const timeoutMs = isFlash ? 8000 : 14000;
-        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs));
+    // =========================================================================
+    // 1. OpenAI 멀티 키 로드밸런싱 & 자동 Failover 우선 호출
+    // =========================================================================
+    const openAiHistory: OpenAIMessage[] = (chatHistory || [])
+      .slice(-8)
+      .map((m: any) => ({
+        role: m.sender === 'user' ? ('user' as const) : ('assistant' as const),
+        content: m.text,
+      }));
 
-        const genConfig: any = {
-          systemInstruction: systemInstruction,
-          temperature: 0.75,
-          maxOutputTokens: 700,
-        };
+    const openAiMessages: OpenAIMessage[] = [
+      { role: 'system', content: systemInstruction },
+      ...openAiHistory,
+      { role: 'user', content: message },
+    ];
 
-        const genPromise = ai.models.generateContent({
-          model: modelName,
-          contents: contents as any,
-          config: genConfig,
-        });
+    const openAIResult = await callOpenAIWithRotation(openAiMessages, {
+      temperature: 0.75,
+      maxTokens: 500,
+    });
 
-        const res: any = await Promise.race([genPromise, timeoutPromise]);
-        if (res) {
-          // Extract only non-thought text parts if available
-          const candidateParts = res?.candidates?.[0]?.content?.parts;
-          let extracted = '';
-          if (Array.isArray(candidateParts)) {
-            extracted = candidateParts
-              .filter((p: any) => !p.thought && typeof p.text === 'string')
-              .map((p: any) => p.text)
-              .join('')
-              .trim();
-          }
-          if (!extracted && res.text) {
-            extracted = res.text.trim();
-          }
-
-          const cleaned = sanitizeAIReply(extracted);
-          if (cleaned) {
-            replyText = cleaned;
-            successModel = modelName;
-            break;
-          }
-        }
-      } catch (err: any) {
-        console.warn(`[chat2 API] Model ${modelName} failed or timed out:`, err?.message || err);
+    if (openAIResult?.text) {
+      const cleaned = sanitizeAIReply(openAIResult.text);
+      if (cleaned) {
+        replyText = cleaned;
+        successModel = `openai-${openAIResult.modelUsed}-key${openAIResult.keyUsedIndex}`;
       }
     }
 
+    // =========================================================================
+    // 2. OpenAI 키가 없거나 실패 시 Google Gemini로 안전하게 Fallback
+    // =========================================================================
+    if (!replyText && process.env.GEMINI_API_KEY) {
+      try {
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const contents = (chatHistory || []).slice(-8).map((m: any) => ({
+          role: m.sender === 'user' ? 'user' : 'model',
+          parts: [{ text: m.text }],
+        }));
+
+        if (contents.length === 0 || contents[contents.length - 1].role !== 'user') {
+          contents.push({
+            role: 'user',
+            parts: [{ text: message }],
+          });
+        }
+
+        for (const modelName of MODELS) {
+          try {
+            const isFlash = modelName.includes('flash');
+            const timeoutMs = isFlash ? 8000 : 14000;
+            const timeoutPromise = new Promise<null>((resolve) =>
+              setTimeout(() => resolve(null), timeoutMs)
+            );
+
+            const genConfig: any = {
+              systemInstruction: systemInstruction,
+              temperature: 0.75,
+              maxOutputTokens: 700,
+            };
+
+            const genPromise = ai.models.generateContent({
+              model: modelName,
+              contents: contents as any,
+              config: genConfig,
+            });
+
+            const res: any = await Promise.race([genPromise, timeoutPromise]);
+            if (res) {
+              const candidateParts = res?.candidates?.[0]?.content?.parts;
+              let extracted = '';
+              if (Array.isArray(candidateParts)) {
+                extracted = candidateParts
+                  .filter((p: any) => !p.thought && typeof p.text === 'string')
+                  .map((p: any) => p.text)
+                  .join('')
+                  .trim();
+              }
+              if (!extracted && res.text) {
+                extracted = res.text.trim();
+              }
+
+              const cleaned = sanitizeAIReply(extracted);
+              if (cleaned) {
+                replyText = cleaned;
+                successModel = `gemini-${modelName}`;
+                break;
+              }
+            }
+          } catch (err: any) {
+            console.warn(`[chat2 API] Model ${modelName} failed:`, err?.message || err);
+          }
+        }
+      } catch (geminiErr: any) {
+        console.warn('[chat2 API] Gemini fallback failed:', geminiErr?.message || geminiErr);
+      }
+    }
+
+    // =========================================================================
+    // 3. 최악의 모든 API 실패 시 자연스러운 Fallback 대사
+    // =========================================================================
     if (!replyText) {
       replyText = `응응, ${userCleanName}아 이야기해 줘서 고마워! 네 마음 다 느껴진다 ㅎㅎ`;
       successModel = 'fallback';
@@ -185,7 +223,6 @@ ${stageContext}`;
       modelUsed: successModel,
       cleanedNickname: userCleanName,
     });
-
   } catch (error: any) {
     console.error('Chat2 API Route Error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

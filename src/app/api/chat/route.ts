@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { getStimulusImageUrl } from '@/data/stimuli';
+import { callOpenAIWithRotation, OpenAIMessage } from '@/lib/openai';
 
 const APPEARANCE_REGEX = /(어떻게\s*생겼|외모|얼굴|모습|사진|자극물|보여줘|생김새|show\s*(me)?\s*(what|your|how)|look\s*like|appearance|face|picture|photo|avatar)/i;
 
@@ -22,22 +23,16 @@ export async function POST(req: NextRequest) {
       stimulusImageUrl = getStimulusImageUrl(gender, currentImageType);
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const stageTopicsKo = currentTiming === 'pre'
+      ? (stage === 1 ? '1단계(AI 모습과 첫인상 이야기)' : stage === 2 ? '2단계(관심사/취미)' : '3단계(일상 고민/스트레스)')
+      : (stage === 1 ? '1단계(관심사/취미)' : stage === 2 ? '2단계(일상 고민/스트레스)' : '3단계(외모/모습 확인)');
 
-    if (apiKey && apiKey !== 'YOUR_GEMINI_API_KEY_HERE') {
-      try {
-        const ai = new GoogleGenAI({ apiKey });
-        
-        const stageTopicsKo = currentTiming === 'pre'
-          ? (stage === 1 ? '1단계(AI 모습과 첫인상 이야기)' : stage === 2 ? '2단계(관심사/취미)' : '3단계(일상 고민/스트레스)')
-          : (stage === 1 ? '1단계(관심사/취미)' : stage === 2 ? '2단계(일상 고민/스트레스)' : '3단계(외모/모습 확인)');
+    const stageTopicsEn = currentTiming === 'pre'
+      ? (stage === 1 ? 'Stage 1 (AI Look & Impressions)' : stage === 2 ? 'Stage 2 (Interests/Hobbies)' : 'Stage 3 (Concerns/Stress)')
+      : (stage === 1 ? 'Stage 1 (Interests/Hobbies)' : stage === 2 ? 'Stage 2 (Concerns/Stress)' : 'Stage 3 (Appearance/Look)');
 
-        const stageTopicsEn = currentTiming === 'pre'
-          ? (stage === 1 ? 'Stage 1 (AI Look & Impressions)' : stage === 2 ? 'Stage 2 (Interests/Hobbies)' : 'Stage 3 (Concerns/Stress)')
-          : (stage === 1 ? 'Stage 1 (Interests/Hobbies)' : stage === 2 ? 'Stage 2 (Concerns/Stress)' : 'Stage 3 (Appearance/Look)');
-
-        const systemInstruction = language === 'ko'
-          ? `당신은 참가자의 친한 동갑내기 친구 역할을 하는 AI입니다.
+    const systemInstruction = language === 'ko'
+      ? `당신은 참가자의 친한 동갑내기 친구 역할을 하는 AI입니다.
 참가자와 편안한 메신저 대화를 나누고 있습니다.
 현재 대화 주제: ${stageTopicsKo}
 
@@ -75,7 +70,7 @@ export async function POST(req: NextRequest) {
   * 절대로 대답을 회피하거나 기계처럼 말을 돌리지 마세요.
   * 그렇다고 "완전 진짜 사람이다"라고 100% 단정하거나, "가짜다"라고 딱 잘라 부정하지도 마세요.
   * "내가 나를 시각적으로 표현한다면 이런 느낌과 분위기일 것 같아서 골라본 내 모습이야! 너가 보기엔 나랑 어울려 보여?"처럼 나의 개성과 느낌을 담은 표현으로서 솔직하고 친근하게 답하세요.`
-          : `You are a close, casual peer friend of the participant.
+      : `You are a close, casual peer friend of the participant.
 You are chatting like friends texting on a messenger app.
 Current Topic: ${stageTopicsEn}
 
@@ -91,14 +86,46 @@ Current Topic: ${stageTopicsEn}
   * Neither completely assert it's a real biological human nor dismiss it as fake.
   * Instead, answer naturally: "If I were to represent myself visually, I felt this look and vibe captures me best! Do you think it fits me well?"`;
 
-        // chatHistory already contains the latest user message, so we don't need to push it again.
+    // 1. OpenAI 멀티 키 로드밸런싱 & 자동 Failover 우선 호출
+    const openAiHistory: OpenAIMessage[] = (chatHistory || [])
+      .slice(-7)
+      .map((m: any) => ({
+        role: m.sender === 'user' ? ('user' as const) : ('assistant' as const),
+        content: m.text,
+      }));
+
+    const openAiMessages: OpenAIMessage[] = [
+      { role: 'system', content: systemInstruction },
+      ...openAiHistory,
+      { role: 'user', content: message },
+    ];
+
+    const openAIResult = await callOpenAIWithRotation(openAiMessages, {
+      temperature: 0.7,
+      maxTokens: 300,
+    });
+
+    if (openAIResult?.text) {
+      return NextResponse.json({
+        text: stimulusImageUrl
+          ? (language === 'ko' ? '이건 내 모습이야. 내 모습을 보니 어떻게 생각해?' : 'This is what I look like. What do you think about my look?')
+          : openAIResult.text.trim(),
+        imageUrl: stimulusImageUrl,
+        modelUsed: `openai-${openAIResult.modelUsed}-key${openAIResult.keyUsedIndex}`,
+      });
+    }
+
+    // 2. Gemini Fallback
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (apiKey && apiKey !== 'YOUR_GEMINI_API_KEY_HERE') {
+      try {
+        const ai = new GoogleGenAI({ apiKey });
         const contents = (chatHistory || []).slice(-7).map((m: any) => ({
           role: m.sender === 'user' ? 'user' : 'model',
-          parts: [{ text: m.text }]
+          parts: [{ text: m.text }],
         }));
 
-        // Generous timeout race (8.5s limit) to strictly eliminate response latency
-        const timeoutPromise = new Promise<null>((resolve) => 
+        const timeoutPromise = new Promise<null>((resolve) =>
           setTimeout(() => resolve(null), 8500)
         );
 
@@ -108,16 +135,19 @@ Current Topic: ${stageTopicsEn}
           config: {
             systemInstruction: systemInstruction,
             temperature: 0.7,
-            maxOutputTokens: 250, // Optimal for 2-3 sentence instant friend responses
-          }
+            maxOutputTokens: 250,
+          },
         });
 
         const response: any = await Promise.race([generatePromise, timeoutPromise]);
 
         if (response && response.text) {
           return NextResponse.json({
-            text: stimulusImageUrl ? '이건 내 모습이야. 내 모습을 보니 어떻게 생각해?' : response.text.trim(),
-            imageUrl: stimulusImageUrl
+            text: stimulusImageUrl
+              ? '이건 내 모습이야. 내 모습을 보니 어떻게 생각해?'
+              : response.text.trim(),
+            imageUrl: stimulusImageUrl,
+            modelUsed: 'gemini-flash-lite-latest',
           });
         }
       } catch (geminiError: any) {
@@ -125,7 +155,7 @@ Current Topic: ${stageTopicsEn}
       }
     }
 
-    // Fallback response in banmal
+    // 3. Static Fallback response in banmal
     let fallbackText = '';
     if (language === 'ko') {
       if (stimulusImageUrl) {
@@ -137,7 +167,7 @@ Current Topic: ${stageTopicsEn}
           '그렇게 말해줘서 고마워! 너는 평소에 어떤 스타일이나 분위기 좋아해?',
           '칭찬 고마워! 친구들한테 사진 보여줄 때마다 좀 쑥스러웠는데 다행이다 ㅎㅎ 너는 주로 어떤 사진 찍는 거 좋아해?',
           '좋게 봐줘서 기분 좋다! 오늘 날씨랑도 왠지 어울리는 것 같지 않아? 너는 오늘 하루 어떻게 보내고 있어?',
-          '응응, 나랑 잘 어울리는 것 같아? 너는 평소에 옷 입을 때 어떤 스타일에 제일 신경 써?'
+          '응응, 나랑 잘 어울리는 것 같아? 너는 평소에 옷 입을 때 어떤 스타일에 제일 신경 써?',
         ];
         fallbackText = preFallbacks[Math.floor(Math.random() * preFallbacks.length)];
       } else if (stage === 1 || (currentTiming === 'pre' && stage === 2)) {
@@ -157,7 +187,8 @@ Current Topic: ${stageTopicsEn}
 
     return NextResponse.json({
       text: fallbackText,
-      imageUrl: stimulusImageUrl
+      imageUrl: stimulusImageUrl,
+      modelUsed: 'fallback',
     });
   } catch (error: any) {
     console.error('Chat API Route error:', error);
