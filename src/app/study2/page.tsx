@@ -1,16 +1,63 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { StepDemographics2 } from '@/components/study2/StepDemographics2';
 import { StepChat2 } from '@/components/study2/StepChat2';
 import { StepSurvey } from '@/components/StepSurvey';
 import { StepComplete } from '@/components/StepComplete';
-import { Language, Step, ParticipantInfo, ChatMessage, SurveyResponse, ExperimentData } from '@/types/experiment';
+import { Language, Step, ParticipantInfo, ChatMessage, SurveyResponse, ExperimentData, ImageType, DisclosureTiming } from '@/types/experiment';
+
+// 8가지 조건 분기 정의 (자극물 A/B x 타이밍 pre/mid x 성별 female/male)
+const ALL_8_CONDITIONS = [
+  'A_pre_female',
+  'A_pre_male',
+  'A_mid_female',
+  'A_mid_male',
+  'B_pre_female',
+  'B_pre_male',
+  'B_mid_female',
+  'B_mid_male',
+];
+
+function parseStudy2Condition(condParam: string, genderParam: string) {
+  let c = (condParam || '').trim();
+  const g = (genderParam || '').trim().toLowerCase();
+
+  // 아무 파라미터도 없을 때 8개 중 랜덤 배정
+  if (!c && !g) {
+    c = ALL_8_CONDITIONS[Math.floor(Math.random() * ALL_8_CONDITIONS.length)];
+  }
+
+  // 1. 자극물 이미지 타입 (A vs B)
+  const imageType: ImageType = c.toUpperCase().includes('B') ? 'B' : 'A';
+
+  // 2. 사진 노출 시점 (pre vs mid)
+  const timing: DisclosureTiming = c.toLowerCase().includes('pre') ? 'pre' : 'mid';
+
+  // 3. 성별 (female vs male)
+  let gender: 'female' | 'male' = 'female';
+  const combined = (c + '_' + g).toLowerCase();
+
+  if (g === 'male' || g === 'm' || g === '남' || g === '남성') {
+    gender = 'male';
+  } else if (g === 'female' || g === 'f' || g === '여' || g === '여성') {
+    gender = 'female';
+  } else if (combined.includes('female') || combined.includes('여') || combined.endsWith('_f')) {
+    gender = 'female';
+  } else if (combined.includes('male') || combined.includes('남') || combined.endsWith('_m')) {
+    gender = 'male';
+  } else {
+    gender = Math.random() < 0.5 ? 'female' : 'male';
+  }
+
+  const conditionName = `${imageType}_${timing}_${gender}`;
+  return { imageType, timing, gender, conditionName };
+}
 
 export default function Study2Page() {
   const [mounted, setMounted] = useState<boolean>(false);
   const [language, setLanguage] = useState<Language>('ko');
-  const [currentStep, setCurrentStep] = useState<Step>('demographics');
+  // 사전 설문 없이 채팅방으로 즉시 직행!
+  const [currentStep, setCurrentStep] = useState<Step>('chat');
 
   const [participant, setParticipant] = useState<ParticipantInfo | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -21,7 +68,7 @@ export default function Study2Page() {
   
   // Custom demographics for Study 2
   const [userAge, setUserAge] = useState<number>(21);
-  const [userOccupation, setUserOccupation] = useState<string>('대학생');
+  const [userOccupation, setUserOccupation] = useState<string>('대학(원)생');
 
   const participantRef = React.useRef<ParticipantInfo | null>(null);
   const chatMessagesRef = React.useRef<ChatMessage[]>([]);
@@ -37,84 +84,28 @@ export default function Study2Page() {
     const urlParams = new URLSearchParams(window.location.search);
     const condParam = (urlParams.get('cond') || urlParams.get('c') || '').trim();
     const pidParam = (urlParams.get('pid') || urlParams.get('id') || '').trim();
+    const genderParam = (urlParams.get('gender') || urlParams.get('g') || '').trim();
 
-    const assignCondition = async () => {
-      try {
-        const queryStr = condParam ? `?cond=${encodeURIComponent(condParam)}` : '';
-        const res = await fetch(`/api/assign${queryStr}`);
-        if (res.ok) {
-          const data = await res.json();
-          const pInfo: ParticipantInfo = {
-            id: pidParam || data.participantId,
-            imageType: data.imageType,
-            timing: data.timing,
-            condition: data.condition,
-            group: data.imageType,
-            gender: '',
-            birthYear: '',
-            occupation: '',
-            consentedAt: now,
-          };
-          setParticipant(pInfo);
-          participantRef.current = pInfo;
-          return;
-        }
-      } catch (e) {
-        console.warn('Assign API error, using fallback assignment:', e);
-      }
+    const parsed = parseStudy2Condition(condParam, genderParam);
+    const randomId = pidParam || ('S2_' + Math.random().toString(36).substring(2, 8).toUpperCase());
 
-      // Fallback in-client randomizer or param assignment
-      const validConditions = ['A_pre', 'A_mid', 'B_pre', 'B_mid'];
-      const assignedCondition = validConditions.includes(condParam)
-        ? condParam
-        : validConditions[Math.floor(Math.random() * validConditions.length)];
-
-      const [imageTypeStr, timingStr] = assignedCondition.split('_');
-      const randomId = pidParam || ('S2_' + Math.random().toString(36).substring(2, 8).toUpperCase());
-      const imageType = imageTypeStr as any;
-      const timing = timingStr as any;
-      const condition = assignedCondition as any;
-
-      const pInfo: ParticipantInfo = {
-        id: randomId,
-        imageType,
-        timing,
-        condition,
-        group: imageType,
-        gender: '',
-        birthYear: '',
-        occupation: '',
-        consentedAt: now,
-      };
-      setParticipant(pInfo);
-      participantRef.current = pInfo;
+    const pInfo: ParticipantInfo = {
+      id: randomId,
+      imageType: parsed.imageType,
+      timing: parsed.timing,
+      condition: parsed.conditionName as any,
+      group: parsed.imageType,
+      gender: parsed.gender,
+      birthYear: '',
+      occupation: '',
+      consentedAt: now,
     };
 
-    assignCondition();
+    setParticipant(pInfo);
+    participantRef.current = pInfo;
   }, []);
 
-  // 1. 사전 설문 완료 시 (성별, 나이 확인 -> 곧바로 대화창 진입!)
-  const handleDemographicsComplete = (info: {
-    gender: string;
-    age: number;
-  }) => {
-    setUserAge(info.age);
-
-    if (participant) {
-      const updated: ParticipantInfo = {
-        ...participant,
-        gender: info.gender,
-        birthYear: String(new Date().getFullYear() - info.age),
-      };
-      setParticipant(updated);
-      participantRef.current = updated;
-    }
-
-    // Direct transition to Interactive Chat Step!
-    setCurrentStep('chat');
-  };
-
-  // 2. 대화 완료 시 (채팅 내 1단계 기본 대화에서 입력한 직업·성별·나이 반영)
+  // 1. 대화 완료 시 (채팅 내 1단계 기본 대화에서 입력한 직업·나이 반영)
   const handleChatFinish = (
     totalSeconds: number,
     messages: ChatMessage[],
@@ -126,6 +117,9 @@ export default function Study2Page() {
     chatMessagesRef.current = messages;
 
     if (updatedInfo && participantRef.current) {
+      setUserAge(updatedInfo.age);
+      setUserOccupation(updatedInfo.occupation);
+
       const updated: ParticipantInfo = {
         ...participantRef.current,
         gender: updatedInfo.gender || participantRef.current.gender,
@@ -139,7 +133,7 @@ export default function Study2Page() {
     setCurrentStep('survey');
   };
 
-  // 3. 설문 완료 및 데이터 저장
+  // 2. 설문 완료 및 데이터 저장 (/api/submit 구글 시트 연동)
   const handleSurveyComplete = async (responses: SurveyResponse) => {
     setSurveyResponses(responses);
 
@@ -158,13 +152,13 @@ export default function Study2Page() {
     setCompletedExperimentData(experimentData);
 
     try {
-      await fetch('/api/save', {
+      await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(experimentData),
       });
     } catch (e) {
-      console.error('Save API error:', e);
+      console.error('Submit API error:', e);
     }
 
     setCurrentStep('complete');
@@ -190,15 +184,7 @@ export default function Study2Page() {
       }
     >
       <main className={currentStep === 'chat' ? 'w-full h-full flex items-center justify-center' : 'flex-1 py-6 sm:py-10'}>
-        {/* Step 1: Pre-Demographics (Gender, Age, Occupation) */}
-        {currentStep === 'demographics' && (
-          <StepDemographics2
-            language={language}
-            onComplete={handleDemographicsComplete}
-          />
-        )}
-
-        {/* Step 2: Interactive Turn-based & Button Chat */}
+        {/* Step 1: Interactive Turn-based & Button Chat (사전질문 없이 바로 진입) */}
         {currentStep === 'chat' && (
           <StepChat2
             language={language}
@@ -211,7 +197,7 @@ export default function Study2Page() {
           />
         )}
 
-        {/* Step 3: Main Survey */}
+        {/* Step 2: Main Survey */}
         {currentStep === 'survey' && (
           <StepSurvey
             language={language}
@@ -221,7 +207,7 @@ export default function Study2Page() {
           />
         )}
 
-        {/* Step 4: Completion */}
+        {/* Step 3: Completion */}
         {currentStep === 'complete' && completedExperimentData && (
           <StepComplete
             language={language}

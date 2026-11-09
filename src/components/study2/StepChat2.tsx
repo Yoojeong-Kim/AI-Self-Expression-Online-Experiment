@@ -65,9 +65,8 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   onFinishChat,
 }) => {
   const currentTiming = timing || 'mid';
+  const chatGender = gender || 'female';
 
-  // Chat-level basic info state (synced with pre-survey defaults, editable during Step 1 basic dialogue)
-  const [chatGender, setChatGender] = useState<string>(gender || 'female');
   const [chatAge, setChatAge] = useState<number>(
     userAge && userAge >= 19 && userAge <= 24 ? userAge : 21
   );
@@ -75,14 +74,12 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     String(userAge && userAge >= 19 && userAge <= 24 ? userAge : 21)
   );
 
-  // Sync with pre-survey values so the user's Page 1 selections are pre-highlighted and pre-filled
   useEffect(() => {
-    if (gender) setChatGender(gender);
     if (userAge && userAge >= 19 && userAge <= 24) {
       setChatAge(userAge);
       setAgeDraft(String(userAge));
     }
-  }, [gender, userAge]);
+  }, [userAge]);
 
   const [nickname, setNickname] = useState<string>('');
   const [nicknameDraft, setNicknameDraft] = useState<string>('');
@@ -98,8 +95,8 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   const [showCustomWorry, setShowCustomWorry] = useState<boolean>(false);
   const [customWorryDraft, setCustomWorryDraft] = useState<string>('');
 
-  // Stimulus image uses pre-survey gender (or updated chatGender)
-  const stimulusImageUrl = getStimulusImageUrl(chatGender || gender, imageType);
+  // Stimulus image uses link-assigned gender
+  const stimulusImageUrl = getStimulusImageUrl(chatGender, imageType);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState<string>('');
@@ -107,7 +104,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
 
   const [flowStep, setFlowStep] = useState<string>(
-    currentTiming === 'pre' ? 'pre_photo_chat' : 'ask_gender'
+    currentTiming === 'pre' ? 'pre_photo_chat' : 'ask_age'
   );
 
   const [selectedEnergy, setSelectedEnergy] = useState<string>('');
@@ -140,7 +137,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   // Initial Greeting Setup
   useEffect(() => {
     const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const initialPhotoUrl = getStimulusImageUrl(gender, imageType);
+    const initialPhotoUrl = getStimulusImageUrl(chatGender, imageType);
 
     if (currentTiming === 'pre') {
       setMessages([
@@ -160,13 +157,13 @@ export const StepChat2: React.FC<StepChat2Props> = ({
         {
           id: 'mid-init',
           sender: 'ai',
-          text: '안녕! 만나서 반가워 ㅎㅎ 오늘 너랑 편하게 이야기 나누고 싶어!\n우리 본격적으로 이야기 나누기 전에 서로 기본적인 것부터 알아가 볼까? 먼저 너는 성별이 어떻게 돼?',
+          text: '안녕! 만나서 반가워 ㅎㅎ 오늘 너랑 편하게 이야기 나누고 싶어!\n우리 본격적으로 이야기 나누기 전에 서로 기본적인 것부터 알아가 볼까? 나이는 만으로 몇 살이야?',
           timestamp: nowStr,
         },
       ]);
-      setFlowStep('ask_gender');
+      setFlowStep('ask_age');
     }
-  }, [currentTiming, gender, imageType]);
+  }, [currentTiming, chatGender, imageType]);
 
   // API Call helper
   const callAI = async (
@@ -216,39 +213,10 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   };
 
   // ============================================================================
-  // [1단계 기본 대화]: 성별 -> 나이 -> 호칭 -> 직업 (모든 단계 되돌리기 지원)
+  // [1단계 기본 대화]: 나이 -> 호칭 -> 직업 (모든 단계 되돌리기 지원)
   // ============================================================================
 
-  // 1-1. 성별 선택
-  const handleGenderSelect = (selectedG: 'female' | 'male') => {
-    setChatGender(selectedG);
-    const label = selectedG === 'female' ? '여성' : '남성';
-    const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    const userMsg: ChatMessage = {
-      id: 'u-gender-' + Date.now(),
-      sender: 'user',
-      text: label,
-      timestamp: nowStr,
-    };
-    const aiMsg: ChatMessage = {
-      id: 'ai-ask-age-' + Date.now(),
-      sender: 'ai',
-      text: '반가워 ㅎㅎ 나이는 만으로 몇 살이야?',
-      timestamp: nowStr,
-    };
-
-    setMessages((prev) => [...prev, userMsg, aiMsg]);
-    setFlowStep('ask_age');
-  };
-
-  // 되돌리기: 나이 -> 성별
-  const handleBackToGender = () => {
-    setMessages((prev) => prev.slice(0, -2));
-    setFlowStep('ask_gender');
-  };
-
-  // 1-2. 나이 입력 확인 (만 19~24세 범위 제한)
+  // 1-1. 나이 입력 확인 (만 19~24세 범위 제한)
   const handleAgeSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const parsed = parseInt(ageDraft.trim(), 10);
@@ -462,13 +430,13 @@ export const StepChat2: React.FC<StepChat2Props> = ({
 
       if (flowStep === 'pre_photo_chat' && nextCnt >= 2) {
         const combinedAiMsg: ChatMessage = {
-          id: 'ai-photo-to-gender-' + Date.now(),
+          id: 'ai-photo-to-age-' + Date.now(),
           sender: 'ai',
-          text: `${aiReply}\n\n내 모습 좋게 봐줘서 고마워 ㅎㅎ 그럼 이제 서로 기본적인 것부터 하나씩 알아가 볼까? 먼저 너는 성별이 어떻게 돼?`,
+          text: `${aiReply}\n\n내 모습 좋게 봐줘서 고마워 ㅎㅎ 그럼 우리 서로 기본적인 것부터 알아가 볼까? 나이는 만으로 몇 살이야?`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => [...prev, combinedAiMsg]);
-        setFlowStep('ask_gender');
+        setFlowStep('ask_age');
       } else if (flowStep === 'mid_photo_chat' && nextCnt >= 2) {
         const combinedCompleteMsg: ChatMessage = {
           id: 'ai-complete-mid-' + Date.now(),
@@ -648,52 +616,11 @@ export const StepChat2: React.FC<StepChat2Props> = ({
 
       {/* Bottom Composer & Interactive Selection Area (컴팩트한 높이로 한 화면 유지) */}
       <div className="px-4 sm:px-6 pb-3.5 pt-2 bg-white flex-shrink-0">
-        {/* 1-1. 성별 선택 */}
-        {flowStep === 'ask_gender' && (
-          <div className="p-3 rounded-2xl bg-[#f4f4f4] border border-neutral-200/80 space-y-2">
-            <div className="text-xs font-semibold text-neutral-600 px-1">
-              <span>성별을 선택해 주세요</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleGenderSelect('female')}
-                className={`py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm bg-white text-[#0d0d0d] hover:bg-[#0d0d0d] hover:text-white transition-all cursor-pointer ${
-                  chatGender === 'female'
-                    ? 'border-2 border-[#0d0d0d]'
-                    : 'border border-neutral-200 hover:border-[#0d0d0d]'
-                }`}
-              >
-                👧 여성
-              </button>
-              <button
-                type="button"
-                onClick={() => handleGenderSelect('male')}
-                className={`py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm bg-white text-[#0d0d0d] hover:bg-[#0d0d0d] hover:text-white transition-all cursor-pointer ${
-                  chatGender === 'male'
-                    ? 'border-2 border-[#0d0d0d]'
-                    : 'border border-neutral-200 hover:border-[#0d0d0d]'
-                }`}
-              >
-                👦 남성
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* 1-2. 나이 입력 */}
+        {/* 1-1. 나이 입력 */}
         {flowStep === 'ask_age' && (
           <form onSubmit={handleAgeSubmit} className="p-3 rounded-2xl bg-[#f4f4f4] border border-neutral-200/80 space-y-2">
-            <div className="text-xs font-semibold text-neutral-600 px-1 flex items-center justify-between">
+            <div className="text-xs font-semibold text-neutral-600 px-1">
               <span>만 나이를 입력해 주세요</span>
-              <button
-                type="button"
-                onClick={handleBackToGender}
-                className="text-[11px] text-neutral-500 hover:text-[#0d0d0d] flex items-center gap-0.5 cursor-pointer font-normal underline"
-              >
-                <RotateCcw className="w-3 h-3" />
-                이전으로
-              </button>
             </div>
             <div className="flex items-center gap-2">
               <div className="flex-1 flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl border border-neutral-300 bg-white">
