@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ArrowRight, MessageCircle, Heart, FileText } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 interface StepInstructions2Props {
   onStart: () => void;
@@ -63,7 +63,7 @@ export const StepInstructions2: React.FC<StepInstructions2Props> = ({ onStart })
                 대화 후 설문 이동
               </h4>
               <p className="text-xs sm:text-[13px] text-neutral-600 leading-relaxed">
-                약 3~4분간의 대화가 끝나면, 대화 경험에 대한 짧은 설문 화면으로 이동합니다.
+                약 5분간의 대화가 끝나면, 대화 경험에 대한 짧은 설문 화면으로 이동합니다.
               </p>
             </div>
           </div>

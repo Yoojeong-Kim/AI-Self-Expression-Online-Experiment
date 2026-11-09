@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Language, ImageType, DisclosureTiming, ChatMessage } from '@/types/experiment';
 import { getStimulusImageUrl } from '@/data/stimuli';
-import { ArrowUp, ArrowRight, CheckCircle2, RotateCcw } from 'lucide-react';
+import { ArrowUp, ArrowRight, CheckCircle2, RotateCcw, Sparkles } from 'lucide-react';
 
 interface StepChat2Props {
   language: Language;
@@ -37,12 +37,22 @@ const ROUND1_TOPIC_OPTIONS = [
   { emoji: '💭', label: '나 자신·성격' },
 ];
 
-// 2라운드: 요즘 기분 & 마음 상태 4종 (+ 기타 = 총 5개)
+// 2라운드: 요즘 기분 & 마음 상태 (긍정적/여유/피로 균형 5종 + 기타)
 const ROUND2_MOOD_OPTIONS = [
-  { emoji: '😮‍💨', label: '할 게 많아서 좀 지쳐' },
-  { emoji: '🌀', label: '생각만 많고 머릿속이 복잡해' },
-  { emoji: '🌿', label: '큰 걱정 없이 무난무난해' },
-  { emoji: '😊', label: '나름 잘 풀리고 기분 좋아!' },
+  { emoji: '😊', label: '요즘 기분 좋고 에너지 넘쳐!' },
+  { emoji: '✨', label: '나름 잘 풀리고 일상이 즐거워' },
+  { emoji: '🌿', label: '큰 걱정 없이 편안하고 무난해' },
+  { emoji: '😮‍💨', label: '할 게 많아서 조금 지쳐' },
+  { emoji: '🌀', label: '생각이 많아서 머릿속이 복잡해' },
+];
+
+// 3라운드: 깊은 속마음 & 남들에게 털어놓지 못했던 고민 5종 (+ 기타)
+const ROUND3_WORRY_OPTIONS = [
+  { emoji: '🌱', label: '미래와 진로에 대한 불안' },
+  { emoji: '👥', label: '인간관계 스트레스와 외로움' },
+  { emoji: '🪞', label: '자존감과 남들과의 비교' },
+  { emoji: '🎒', label: '가족이나 주변 기대에 대한 부담' },
+  { emoji: '🔒', label: '마음 한구석에 있는 나만의 고민' },
 ];
 
 // 호칭 정제 함수 (예: "유정이라고 해봐" -> "유정")
@@ -66,6 +76,8 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   const currentTiming = timing || 'mid';
   const chatGender = gender || 'female';
 
+  // 1. Participant demographics
+  const [userGender, setUserGender] = useState<string>('여성');
   const [chatAge, setChatAge] = useState<number>(
     userAge && userAge >= 19 && userAge <= 24 ? userAge : 21
   );
@@ -84,7 +96,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   const [nicknameDraft, setNicknameDraft] = useState<string>('');
   const [chatOccupation, setChatOccupation] = useState<string>(userOccupation || '');
 
-  // Custom input toggles & drafts for Occupation, Topic, Mood
+  // Custom input toggles & drafts
   const [showCustomOccupation, setShowCustomOccupation] = useState<boolean>(false);
   const [customOccupationDraft, setCustomOccupationDraft] = useState<string>('');
 
@@ -96,6 +108,10 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   const [showCustomMood, setShowCustomMood] = useState<boolean>(false);
   const [customMoodDraft, setCustomMoodDraft] = useState<string>('');
 
+  const [selectedWorry, setSelectedWorry] = useState<string>('');
+  const [showCustomWorry, setShowCustomWorry] = useState<boolean>(false);
+  const [customWorryDraft, setCustomWorryDraft] = useState<string>('');
+
   // Stimulus image uses link-assigned gender
   const stimulusImageUrl = getStimulusImageUrl(chatGender, imageType);
 
@@ -105,7 +121,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
 
   const [flowStep, setFlowStep] = useState<string>(
-    currentTiming === 'pre' ? 'pre_photo_chat' : 'ask_age'
+    currentTiming === 'pre' ? 'pre_photo_chat' : 'ask_gender'
   );
 
   const [round1TurnCount, setRound1TurnCount] = useState<number>(0);
@@ -133,7 +149,15 @@ export const StepChat2: React.FC<StepChat2Props> = ({
         behavior: 'smooth',
       });
     }
-  }, [messages, isLoading, flowStep, showCustomOccupation, showCustomTopic, showCustomMood]);
+  }, [
+    messages,
+    isLoading,
+    flowStep,
+    showCustomOccupation,
+    showCustomTopic,
+    showCustomMood,
+    showCustomWorry,
+  ]);
 
   // Initial Greeting Setup
   useEffect(() => {
@@ -158,18 +182,25 @@ export const StepChat2: React.FC<StepChat2Props> = ({
         {
           id: 'mid-init',
           sender: 'ai',
-          text: '안녕! 만나서 반가워 ㅎㅎ 오늘 너랑 편하게 이야기 나누고 싶어!\n우리 본격적으로 이야기 나누기 전에 서로 기본적인 것부터 알아가 볼까? 나이는 만으로 몇 살이야?',
+          text: '안녕! 만나서 반가워 ㅎㅎ 오늘 너랑 편하게 이야기 나누고 싶어!\n우리 본격적으로 이야기 나누기 전에 서로 기본적인 것부터 알아가 볼까? 너의 성별은 뭐야?',
           timestamp: nowStr,
         },
       ]);
-      setFlowStep('ask_age');
+      setFlowStep('ask_gender');
     }
   }, [currentTiming, chatGender, imageType]);
 
   // API Call helper
   const callAI = async (
     userMsgText: string,
-    stageName: 'photo_feedback' | 'round1_start' | 'round1_chat' | 'round2_start' | 'round2_chat' | 'round3_chat',
+    stageName:
+      | 'photo_feedback'
+      | 'round1_start'
+      | 'round1_chat'
+      | 'round2_start'
+      | 'round2_chat'
+      | 'round3_start'
+      | 'round3_chat',
     turnNum: number = 1,
     extraHistory: ChatMessage[] = []
   ) => {
@@ -189,7 +220,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
           nickname: nickname || '친구',
           occupation: chatOccupation || '대학생',
           age: chatAge,
-          worryTopic: selectedTopic,
+          worryTopic: selectedWorry || selectedTopic,
           energyState: selectedMood,
           chatHistory: allHist.map((m) => ({
             sender: m.sender,
@@ -214,16 +245,40 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   };
 
   // ============================================================================
-  // [기본 대화]: 나이 -> 호칭 -> 직업
+  // [기본 인구통계 대화]: 성별 -> 나이 -> 호칭 -> 직업
   // ============================================================================
 
-  // 1-1. 나이 입력 확인 (만 19~24세 범위 제한)
+  // 1-1. 성별 선택
+  const handleGenderSelect = (g: string) => {
+    setUserGender(g);
+    const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const userMsg: ChatMessage = {
+      id: 'u-gender-' + Date.now(),
+      sender: 'user',
+      text: g,
+      timestamp: nowStr,
+    };
+    const aiMsg: ChatMessage = {
+      id: 'ai-ask-age-' + Date.now(),
+      sender: 'ai',
+      text: '좋아! 그럼 나이는 만으로 몇 살이야?',
+      timestamp: nowStr,
+    };
+    setMessages((prev) => [...prev, userMsg, aiMsg]);
+    setFlowStep('ask_age');
+  };
+
+  // 되돌리기: 나이 -> 성별
+  const handleBackToGender = () => {
+    setMessages((prev) => prev.slice(0, -2));
+    setFlowStep('ask_gender');
+  };
+
+  // 1-2. 나이 입력 확인 (만 19~24세 범위 제한)
   const handleAgeSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const parsed = parseInt(ageDraft.trim(), 10);
-    const clampedAge = isNaN(parsed)
-      ? 21
-      : Math.min(24, Math.max(19, parsed));
+    const clampedAge = isNaN(parsed) ? 21 : Math.min(24, Math.max(19, parsed));
     setChatAge(clampedAge);
     setAgeDraft(String(clampedAge));
 
@@ -251,7 +306,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     setFlowStep('ask_age');
   };
 
-  // 1-2. 이름(호칭) 입력
+  // 1-3. 이름(호칭) 입력
   const handleNicknameSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const cleaned = cleanNicknameClient(nicknameDraft || nickname || '친구');
@@ -284,7 +339,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     setFlowStep('ask_nickname');
   };
 
-  // 1-3. 직업 선택 완료 -> 곧바로 [1라운드: 대화 주제 카테고리] 질문으로!
+  // 1-4. 직업 선택 완료 -> 곧바로 [1라운드: 대화 주제 카테고리] 질문으로!
   const handleOccupationSelect = (cleanOccText: string) => {
     const cleanOcc = cleanOccText.trim();
     setChatOccupation(cleanOcc);
@@ -317,10 +372,10 @@ export const StepChat2: React.FC<StepChat2Props> = ({
   };
 
   // ============================================================================
-  // [3개 라운드 대화 흐름: 1.주제(5턴) -> 2.기분(5턴) -> 3.속마음·고민(5턴)]
+  // [3개 라운드 대화 흐름: 1.주제 -> 2.기분 -> 3.속마음·고민]
   // ============================================================================
 
-  // 1라운드: 주제 선택 완료 -> AI 첫 질문 받고 5턴 대화 시작!
+  // 1라운드: 주제 선택 완료 -> AI 첫 질문 받고 대화 시작!
   const handleTopicSelect = async (cleanTopicText: string) => {
     const cleanTopic = cleanTopicText.trim();
     setSelectedTopic(cleanTopic);
@@ -350,7 +405,21 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     setTimeout(() => inputRef.current?.focus(), 150);
   };
 
-  // 2라운드: 기분 선택 완료 -> AI 첫 반응 받고 5턴 대화 시작!
+  // 1라운드에서 2라운드(기분 선택)로 넘어가기 (최소 5턴 이후 버튼 클릭 시)
+  const handleTriggerMoveToMood = () => {
+    const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const aiBridgeMsg: ChatMessage = {
+      id: 'ai-bridge-to-mood-' + Date.now(),
+      sender: 'ai',
+      text: '너랑 이야기 나누다 보니 시간 금방 간다 ㅎㅎ\n그럼 요즘 너의 기분이나 마음 상태는 어떤 편이야?',
+      timestamp: nowStr,
+    };
+    setMessages((prev) => [...prev, aiBridgeMsg]);
+    setShowCustomMood(false);
+    setFlowStep('select_mood');
+  };
+
+  // 2라운드: 기분 선택 완료 -> AI 첫 반응 받고 대화 시작!
   const handleMoodSelect = async (cleanMoodText: string) => {
     const cleanMood = cleanMoodText.trim();
     setSelectedMood(cleanMood);
@@ -380,8 +449,76 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     setTimeout(() => inputRef.current?.focus(), 150);
   };
 
+  // 2라운드에서 3라운드(속마음/고민 선택)로 넘어가기 (최소 5턴 이후 버튼 클릭 시)
+  const handleTriggerMoveToWorry = () => {
+    const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const aiBridgeMsg: ChatMessage = {
+      id: 'ai-bridge-to-worry-' + Date.now(),
+      sender: 'ai',
+      text: '너랑 대화하다 보니 진짜 편해진 것 같아 ㅎㅎ\n사실 누구나 겉으론 괜찮아 보여도 남들에겐 쉽게 말 못 하는 깊은 속마음이나 고민이 하나씩 있잖아. 요즘 너를 가장 무겁게 만드는 고민거리가 있다면 편하게 골라줄래?',
+      timestamp: nowStr,
+    };
+    setMessages((prev) => [...prev, aiBridgeMsg]);
+    setShowCustomWorry(false);
+    setFlowStep('select_worry');
+  };
+
+  // 3라운드: 속마음/고민 선택 완료 -> AI 첫 반응 받고 대화 시작!
+  const handleWorrySelect = async (cleanWorryText: string) => {
+    const cleanWorry = cleanWorryText.trim();
+    setSelectedWorry(cleanWorry);
+    setShowCustomWorry(false);
+    const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const userMsg: ChatMessage = {
+      id: 'u-worry-' + Date.now(),
+      sender: 'user',
+      text: cleanWorry,
+      timestamp: nowStr,
+    };
+    setMessages((prev) => [...prev, userMsg]);
+
+    const aiReplyText = await callAI(cleanWorry, 'round3_start', 1, [userMsg]);
+
+    const aiMsg: ChatMessage = {
+      id: 'ai-round3-start-' + Date.now(),
+      sender: 'ai',
+      text: aiReplyText,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    setMessages((prev) => [...prev, aiMsg]);
+    setRound3TurnCount(0);
+    setFlowStep('chat_round3');
+    setTimeout(() => inputRef.current?.focus(), 150);
+  };
+
+  // 3라운드에서 대화 마무리/사진으로 넘어가기 (최소 5턴 이후 버튼 클릭 시)
+  const handleTriggerFinishRound3 = () => {
+    const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (currentTiming === 'mid') {
+      const aiMsg: ChatMessage = {
+        id: 'ai-round3-to-photo-' + Date.now(),
+        sender: 'ai',
+        text: `오늘 ${nickname} 너랑 이렇게 깊은 이야기까지 나눌 수 있어서 진짜 고마웠어 ㅎㅎ\n아 맞다! 계속 대화만 했는데, 내가 실제로 어떻게 생겼는지 안 궁금해?`,
+        timestamp: nowStr,
+      };
+      setMessages((prev) => [...prev, aiMsg]);
+      setFlowStep('mid_photo_ask');
+    } else {
+      const completeMsg: ChatMessage = {
+        id: 'ai-complete-pre-' + Date.now(),
+        sender: 'ai',
+        text: `오늘 ${nickname} 너랑 깊은 이야기 나눌 수 있어서 진짜 고맙고 뜻깊었어 ㅎㅎ\n난 언제나 네 편이니까 힘내! 오늘 나랑 나눈 대화가 어땠는지 다음 화면에서 솔직하게 남겨줄래?`,
+        timestamp: nowStr,
+      };
+      setMessages((prev) => [...prev, completeMsg]);
+      setFlowStep('completed');
+    }
+  };
+
   // ============================================================================
-  // [자유 텍스트 핑퐁]: 사진 이야기(2턴) & 1/2/3라운드(각 5턴)
+  // [자유 텍스트 핑퐁]: 사진 이야기(2턴) & 1/2/3라운드(최소 5턴 ~ 최대 10턴)
   // ============================================================================
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -399,7 +536,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     setInputText('');
     setMessages((prev) => [...prev, userMsg]);
 
-    // 1) Photo chat (Pre or Mid timing) - exactly 2 turns
+    // 1) Photo chat (Pre or Mid timing) - strictly 2 turns
     if (flowStep === 'pre_photo_chat' || flowStep === 'mid_photo_chat') {
       const nextCnt = photoFeedbackCount + 1;
       setPhotoFeedbackCount(nextCnt);
@@ -408,13 +545,13 @@ export const StepChat2: React.FC<StepChat2Props> = ({
 
       if (flowStep === 'pre_photo_chat' && nextCnt >= 2) {
         const combinedAiMsg: ChatMessage = {
-          id: 'ai-photo-to-age-' + Date.now(),
+          id: 'ai-photo-to-gender-' + Date.now(),
           sender: 'ai',
-          text: `${aiReply}\n\n내 모습 좋게 봐줘서 고마워 ㅎㅎ 그럼 우리 서로 기본적인 것부터 알아가 볼까? 나이는 만으로 몇 살이야?`,
+          text: `${aiReply}\n\n내 모습 좋게 봐줘서 고마워 ㅎㅎ 그럼 우리 서로 기본적인 것부터 알아가 볼까? 너의 성별은 뭐야?`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => [...prev, combinedAiMsg]);
-        setFlowStep('ask_age');
+        setFlowStep('ask_gender');
       } else if (flowStep === 'mid_photo_chat' && nextCnt >= 2) {
         const combinedCompleteMsg: ChatMessage = {
           id: 'ai-complete-mid-' + Date.now(),
@@ -437,19 +574,19 @@ export const StepChat2: React.FC<StepChat2Props> = ({
       return;
     }
 
-    // 2) Round 1 Chat (Topic exploration - 5 turns)
+    // 2) Round 1 Chat (주제 대화: 최소 5턴, 최대 10턴)
     if (flowStep === 'chat_round1') {
       const nextTurn = round1TurnCount + 1;
       setRound1TurnCount(nextTurn);
 
       const aiReply = await callAI(trimmed, 'round1_chat', nextTurn, [userMsg]);
 
-      if (nextTurn >= 5) {
-        // AI bridges to Round 2 (mood)
+      // 최대 10턴 도달 시 강제 전환
+      if (nextTurn >= 10) {
         const aiMsg: ChatMessage = {
-          id: 'ai-round1-end-' + Date.now(),
+          id: 'ai-round1-max-' + Date.now(),
           sender: 'ai',
-          text: aiReply,
+          text: `${aiReply}\n\n너랑 이야기 나누다 보니 시간 금방 간다 ㅎㅎ 요즘 너의 기분이나 마음 상태는 어떤 편이야?`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => [...prev, aiMsg]);
@@ -468,25 +605,24 @@ export const StepChat2: React.FC<StepChat2Props> = ({
       return;
     }
 
-    // 3) Round 2 Chat (Mood & feelings - 5 turns)
+    // 3) Round 2 Chat (기분 대화: 최소 5턴, 최대 10턴)
     if (flowStep === 'chat_round2') {
       const nextTurn = round2TurnCount + 1;
       setRound2TurnCount(nextTurn);
 
       const aiReply = await callAI(trimmed, 'round2_chat', nextTurn, [userMsg]);
 
-      if (nextTurn >= 5) {
-        // AI bridges to Round 3 (deep worries & feelings)
+      // 최대 10턴 도달 시 강제 전환 -> [3라운드 속마음/고민 선택지 표시]
+      if (nextTurn >= 10) {
         const aiMsg: ChatMessage = {
-          id: 'ai-round2-end-' + Date.now(),
+          id: 'ai-round2-max-' + Date.now(),
           sender: 'ai',
-          text: aiReply,
+          text: `${aiReply}\n\n너랑 대화하다 보니 진짜 편해진 것 같아 ㅎㅎ 사실 누구나 겉으론 괜찮아 보여도 남들에겐 쉽게 말 못 하는 깊은 속마음이나 고민이 하나씩 있잖아. 요즘 너를 가장 무겁게 만드는 고민거리가 있다면 골라줄래?`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => [...prev, aiMsg]);
-        setRound3TurnCount(0);
-        setFlowStep('chat_round3');
-        setTimeout(() => inputRef.current?.focus(), 150);
+        setShowCustomWorry(false);
+        setFlowStep('select_worry');
       } else {
         const aiMsg: ChatMessage = {
           id: 'ai-round2-turn-' + nextTurn + '-' + Date.now(),
@@ -500,14 +636,15 @@ export const StepChat2: React.FC<StepChat2Props> = ({
       return;
     }
 
-    // 4) Round 3 Chat (Deep worries & feelings - 5 turns)
+    // 4) Round 3 Chat (깊은 속마음 & 고민: 최소 5턴, 최대 10턴)
     if (flowStep === 'chat_round3') {
       const nextTurn = round3TurnCount + 1;
       setRound3TurnCount(nextTurn);
 
       const aiReply = await callAI(trimmed, 'round3_chat', nextTurn, [userMsg]);
 
-      if (nextTurn >= 5) {
+      // 최대 10턴 도달 시 강제 종료 / 사진 전환
+      if (nextTurn >= 10) {
         if (currentTiming === 'mid') {
           const aiMsg: ChatMessage = {
             id: 'ai-round3-to-photo-' + Date.now(),
@@ -567,7 +704,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
 
   return (
     <div className="w-full max-w-[640px] h-dvh sm:h-[90dvh] sm:max-h-[750px] bg-white sm:rounded-3xl border border-neutral-200/90 shadow-xs flex flex-col overflow-hidden text-[#0d0d0d]">
-      {/* Slim Top Status Bar */}
+      {/* Slim Top Status Bar (분모 없이 진행된 턴 숫자 하나만 심플하게 표시) */}
       {(nickname ||
         flowStep === 'pre_photo_chat' ||
         flowStep === 'mid_photo_chat' ||
@@ -587,25 +724,25 @@ export const StepChat2: React.FC<StepChat2Props> = ({
           <div className="flex items-center gap-2">
             {(flowStep === 'pre_photo_chat' || flowStep === 'mid_photo_chat') && (
               <div className="px-2.5 py-0.5 rounded-full bg-[#f4f4f4] border border-neutral-200 text-[#0d0d0d] text-[11px] font-semibold">
-                사진 대화 {photoFeedbackCount} / 2
+                사진 대화 · {photoFeedbackCount}
               </div>
             )}
 
             {flowStep === 'chat_round1' && (
               <div className="px-2.5 py-0.5 rounded-full bg-[#f4f4f4] border border-neutral-200 text-[#0d0d0d] text-[11px] font-semibold">
-                1라운드: {selectedTopic || '주제'} {round1TurnCount} / 5
+                1라운드 · 대화 {round1TurnCount}
               </div>
             )}
 
             {flowStep === 'chat_round2' && (
               <div className="px-2.5 py-0.5 rounded-full bg-[#f4f4f4] border border-neutral-200 text-[#0d0d0d] text-[11px] font-semibold">
-                2라운드: 요즘 기분 {round2TurnCount} / 5
+                2라운드 · 대화 {round2TurnCount}
               </div>
             )}
 
             {flowStep === 'chat_round3' && (
               <div className="px-2.5 py-0.5 rounded-full bg-[#f4f4f4] border border-neutral-200 text-[#0d0d0d] text-[11px] font-semibold">
-                3라운드: 속마음·고민 {round3TurnCount} / 5
+                3라운드 · 대화 {round3TurnCount}
               </div>
             )}
 
@@ -680,12 +817,45 @@ export const StepChat2: React.FC<StepChat2Props> = ({
       </div>
 
       {/* Bottom Composer & Interactive Selection Area */}
-      <div className="px-4 sm:px-6 pb-3.5 pt-2 bg-white flex-shrink-0">
+      <div className="px-4 sm:px-6 pb-3.5 pt-2 bg-white flex-shrink-0 space-y-2">
+        {/* 1-0. 성별 선택 (이모지 없이 깔끔하게) */}
+        {flowStep === 'ask_gender' && (
+          <div className="p-3.5 rounded-2xl bg-[#f4f4f4] border border-neutral-200/80 space-y-2.5 animate-in fade-in duration-150">
+            <div className="text-xs font-semibold text-neutral-600 px-1">
+              <span>본인의 성별을 선택해 주세요</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => handleGenderSelect('여성')}
+                className="py-2.5 px-4 rounded-xl border border-neutral-200 bg-white hover:bg-[#0d0d0d] hover:text-white hover:border-[#0d0d0d] text-[#0d0d0d] font-bold text-xs sm:text-sm text-center transition-all cursor-pointer shadow-2xs"
+              >
+                여성
+              </button>
+              <button
+                type="button"
+                onClick={() => handleGenderSelect('남성')}
+                className="py-2.5 px-4 rounded-xl border border-neutral-200 bg-white hover:bg-[#0d0d0d] hover:text-white hover:border-[#0d0d0d] text-[#0d0d0d] font-bold text-xs sm:text-sm text-center transition-all cursor-pointer shadow-2xs"
+              >
+                남성
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* 1-1. 나이 입력 */}
         {flowStep === 'ask_age' && (
           <form onSubmit={handleAgeSubmit} className="p-3 rounded-2xl bg-[#f4f4f4] border border-neutral-200/80 space-y-2">
-            <div className="text-xs font-semibold text-neutral-600 px-1">
+            <div className="text-xs font-semibold text-neutral-600 px-1 flex items-center justify-between">
               <span>만 나이를 입력해 주세요</span>
+              <button
+                type="button"
+                onClick={handleBackToGender}
+                className="text-[11px] text-neutral-500 hover:text-[#0d0d0d] flex items-center gap-0.5 cursor-pointer font-normal underline"
+              >
+                <RotateCcw className="w-3 h-3" />
+                이전으로
+              </button>
             </div>
             <div className="flex items-center gap-2">
               <div className="flex-1 flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl border border-neutral-300 bg-white">
@@ -923,7 +1093,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
               <button
                 type="button"
                 onClick={() => setShowCustomMood(true)}
-                className={`py-2.5 px-2.5 rounded-xl border font-semibold text-xs text-center transition-all cursor-pointer col-span-2 ${
+                className={`py-2.5 px-2.5 rounded-xl border font-semibold text-xs text-center transition-all cursor-pointer ${
                   showCustomMood
                     ? 'border-[#0d0d0d] bg-[#0d0d0d] text-white'
                     : 'border-neutral-200 bg-white hover:bg-[#0d0d0d] hover:text-white text-[#0d0d0d]'
@@ -965,6 +1135,68 @@ export const StepChat2: React.FC<StepChat2Props> = ({
           </div>
         )}
 
+        {/* 3라운드: 깊은 속마음 & 남들에게 말 못한 고민 선택 */}
+        {flowStep === 'select_worry' && !isLoading && (
+          <div className="p-3 rounded-2xl bg-[#f4f4f4] border border-neutral-200/80 space-y-2 animate-in fade-in duration-200">
+            <div className="text-xs font-semibold text-neutral-600 px-1 flex items-center justify-between">
+              <span>남들에게 쉽게 말 못 했던 마음속 고민이 있다면?</span>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              {ROUND3_WORRY_OPTIONS.map((item, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => handleWorrySelect(item.label)}
+                  className="py-2.5 px-2.5 rounded-xl border border-neutral-200 bg-white hover:bg-[#0d0d0d] hover:text-white hover:border-[#0d0d0d] text-[#0d0d0d] font-semibold text-xs text-center transition-all cursor-pointer"
+                >
+                  {item.emoji} {item.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setShowCustomWorry(true)}
+                className={`py-2.5 px-2.5 rounded-xl border font-semibold text-xs text-center transition-all cursor-pointer ${
+                  showCustomWorry
+                    ? 'border-[#0d0d0d] bg-[#0d0d0d] text-white'
+                    : 'border-neutral-200 bg-white hover:bg-[#0d0d0d] hover:text-white text-[#0d0d0d]'
+                }`}
+              >
+                ✨ 기타 (직접 입력)
+              </button>
+            </div>
+
+            {showCustomWorry && (
+              <div className="flex gap-2 pt-1">
+                <input
+                  type="text"
+                  placeholder="털어놓고 싶은 고민이나 생각을 적어줘..."
+                  value={customWorryDraft}
+                  onChange={(e) => setCustomWorryDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && customWorryDraft.trim()) {
+                      e.preventDefault();
+                      handleWorrySelect(customWorryDraft.trim());
+                    }
+                  }}
+                  autoFocus
+                  className="flex-1 px-3 py-1.5 rounded-xl border border-neutral-300 bg-white text-xs sm:text-sm focus:outline-none focus:border-[#0d0d0d]"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (customWorryDraft.trim()) {
+                      handleWorrySelect(customWorryDraft.trim());
+                    }
+                  }}
+                  className="px-4 py-1.5 rounded-xl bg-[#0d0d0d] text-white font-bold text-xs cursor-pointer"
+                >
+                  전송
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 4. Mid 조건: 사진 요청 짧은 버튼 2종 */}
         {flowStep === 'mid_photo_ask' && !isLoading && (
           <div className="p-3 rounded-2xl bg-[#f4f4f4] border border-neutral-200/80 space-y-2">
@@ -990,7 +1222,47 @@ export const StepChat2: React.FC<StepChat2Props> = ({
           </div>
         )}
 
-        {/* 5. 자유 텍스트 타이핑 모드 (사진 대화 2턴 & 1/2/3라운드 각 5턴) */}
+        {/* 라운드 전환 버튼: 최소 5턴 이후 사용자에게 직접 넘어가기 선택권 제공 */}
+        {!isLoading && flowStep === 'chat_round1' && round1TurnCount >= 5 && (
+          <div className="flex justify-end pb-1 animate-in fade-in duration-200">
+            <button
+              type="button"
+              onClick={handleTriggerMoveToMood}
+              className="py-1.5 px-3.5 rounded-full bg-[#f4f4f4] hover:bg-[#0d0d0d] hover:text-white text-[#0d0d0d] text-xs font-bold border border-neutral-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            >
+              <span>요즘 기분 이야기로 넘어가기 (2라운드)</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
+        {!isLoading && flowStep === 'chat_round2' && round2TurnCount >= 5 && (
+          <div className="flex justify-end pb-1 animate-in fade-in duration-200">
+            <button
+              type="button"
+              onClick={handleTriggerMoveToWorry}
+              className="py-1.5 px-3.5 rounded-full bg-[#f4f4f4] hover:bg-[#0d0d0d] hover:text-white text-[#0d0d0d] text-xs font-bold border border-neutral-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            >
+              <span>속마음·고민 이야기로 넘어가기 (3라운드)</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
+        {!isLoading && flowStep === 'chat_round3' && round3TurnCount >= 5 && (
+          <div className="flex justify-end pb-1 animate-in fade-in duration-200">
+            <button
+              type="button"
+              onClick={handleTriggerFinishRound3}
+              className="py-1.5 px-3.5 rounded-full bg-[#f4f4f4] hover:bg-[#0d0d0d] hover:text-white text-[#0d0d0d] text-xs font-bold border border-neutral-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            >
+              <span>{currentTiming === 'mid' ? 'AI 사진 보러 가기' : '대화 완료하고 설문 이동'}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
+        {/* 5. 자유 텍스트 타이핑 모드 (사진 대화 2턴 & 1/2/3라운드 각 5~10턴) */}
         {(flowStep === 'pre_photo_chat' ||
           flowStep === 'mid_photo_chat' ||
           flowStep === 'chat_round1' ||
@@ -1025,7 +1297,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
               type="button"
               onClick={() =>
                 onFinishChat(elapsedSeconds, messages, {
-                  gender: chatGender,
+                  gender: userGender,
                   age: chatAge,
                   occupation: chatOccupation || '대학(원)생',
                 })

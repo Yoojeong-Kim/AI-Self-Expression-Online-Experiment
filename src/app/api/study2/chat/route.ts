@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { callOpenAIWithRotation, OpenAIMessage } from '@/lib/openai';
 
-// Fast Flash models first, Pro model as backup for Gemini
+// Fast Flash models first, Pro model as backup for Gemini fallback
 const MODELS = ['gemini-flash-latest', 'gemini-3.8-flash', 'gemini-pro-latest'];
 
 // Helper to clean nickname (e.g. "유정이라고 해봐" -> "유정", "지우야" -> "지우")
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       message,
-      stage, // 'photo_feedback' | 'round1_start' | 'round1_chat' | 'round2_start' | 'round2_chat' | 'round3_chat'
+      stage, // 'photo_feedback' | 'round1_start' | 'round1_chat' | 'round2_start' | 'round2_chat' | 'round3_start' | 'round3_chat'
       turnCount = 1,
       gender = 'female',
       imageType = 'A',
@@ -78,32 +78,39 @@ export async function POST(req: NextRequest) {
     } else if (stage === 'round1_start') {
       stageContext = `${userCleanName}가 오늘 이야기 나눌 주제로 "${message}"(을)를 선택했어. "아 ${message} 이야기구나! 요즘 진짜 제일 신경 쓰이는 부분이긴 하지 ㅎㅎ"처럼 유쾌하고 따뜻하게 맞장구치면서, 요즘 이 주제와 관련해서 어떤 일이나 생각이 있었는지 편하게 풀어놓을 수 있도록 다정한 질문 딱 1개를 건네줘.`;
     } else if (stage === 'round1_chat') {
-      const isRound1End = turnCount >= 5;
-      if (isRound1End) {
-        stageContext = `지금은 1라운드("${worryTopic || '이야기'}")의 마지막 5번째 대화야. 상대방의 이야기에 크게 공감해주고 이야기를 잘 정리해 준 뒤, 자연스럽게 다음 2라운드(기분 상태)로 넘어가기 위해 "너 이야기 들으니 어떤 느낌인지 알겠다 ㅎㅎ 그럼 요즘 이거랑 관련해서 네 마음이나 기분은 솔직히 좀 어때?"처럼 따뜻하게 질문을 건네줘.`;
+      if (turnCount >= 5) {
+        stageContext = `지금은 1라운드("${worryTopic || '주제'}")의 ${turnCount}번째 대화야. 상대방의 이야기에 충분히 공감해주고 이야기를 잘 정리해주면서, 가볍게 대화를 매듭짓거나 다음 이야기로 넘어갈 준비를 할 수 있도록 따뜻한 맞장구를 쳐줘. 너무 길거나 복잡한 질문은 피하고 편안하게 2~3문장으로 답해줘.`;
       } else {
-        stageContext = `지금은 1라운드("${worryTopic || '이야기'}")의 ${turnCount}번째 대화야. 상대방의 말에 친구로서 깊이 맞장구치고 공감해 주면서, 더 이야기를 이어갈 수 있도록 편안하고 다정한 질문 1개를 건네줘.`;
+        stageContext = `지금은 1라운드("${worryTopic || '주제'}")의 ${turnCount}번째 대화야. 상대방의 말에 친구로서 깊이 맞장구치고 공감해 주면서, 더 이야기를 이어갈 수 있도록 편안하고 다정한 질문 1개를 건네줘.`;
       }
     } else if (stage === 'round2_start') {
-      stageContext = `${userCleanName}가 요즘 본인의 마음/기분 상태가 "${message}"(이)라고 답했어. 친구로서 그 기분에 진심으로 귀 기울이며 "에고 진짜 그렇게 느낄 만하다 ㅠㅠ", "그래도 잘 버텨주고 있어서 다행이다"처럼 깊이 공감해 주고, 최근에 특별히 그렇게 느끼게 된 순간이나 일상이 있었는지 다정한 질문 1개를 건네줘.`;
+      stageContext = `${userCleanName}가 요즘 본인의 마음/기분 상태가 "${message}"(이)라고 답했어.
+절대로 상황에 맞지 않는 억지 위로나 'ㅠㅠ'를 남발하지 마!
+- 만약 기분이 좋거나, 에너지 넘치거나, 편안하고 무난하다고 했으면: "오 다행이다!", "기분 좋다니 나까지 기분 좋아지네 ㅎㅎ", "오 요즘 무슨 좋은 일 있어?"처럼 유쾌하고 밝게 맞장구쳐줘.
+- 만약 지치거나 머리가 복잡하다고 했으면: "에고 요즘 신경 쓸 게 많았나 보다", "많이 피곤했겠네"처럼 차분하고 따뜻하게 들어줘.
+답변 끝에는 요즘 특별히 그렇게 느끼게 된 순간이나 일상이 있었는지 다정한 질문 1개를 건네줘.`;
     } else if (stage === 'round2_chat') {
-      const isRound2End = turnCount >= 5;
-      if (isRound2End) {
-        stageContext = `지금은 2라운드(기분 상태)의 마지막 5번째 대화야. 상대방이 겪었을 감정에 깊이 공감해주면서, 자연스럽게 3라운드(남들에게 털어놓지 못했던 깊은 속마음/고민)로 넘어가기 위해 "에고 혼자서 마음고생 많았겠다 ㅠㅠ 겉으론 괜찮은 척해도 속으론 말 못 할 생각들이 들잖아. 요즘 그중에서도 너 마음을 제일 무겁게 하는 고민이 있다면 편하게 털어놔줘 ㅎㅎ"처럼 따뜻하게 질문을 건네줘.`;
+      if (turnCount >= 5) {
+        stageContext = `지금은 2라운드(기분 상태: "${energyState || '일상'}")의 ${turnCount}번째 대화야. 상대방의 감정에 자연스럽게 귀 기울이고 이야기를 훈훈하게 정리해줘. 과장된 억지 위로나 슬픈 척 'ㅠㅠ'를 쓰지 말고, 편안한 친구처럼 대화를 매듭지어줘.`;
       } else {
-        stageContext = `지금은 2라운드(기분 상태)의 ${turnCount}번째 대화야. 상대방의 감정에 100% 공감하고 위로하면서, 그 감정을 더 편하게 털어놓을 수 있도록 다정한 질문 1개를 건네줘.`;
+        stageContext = `지금은 2라운드(기분 상태: "${energyState || '일상'}")의 ${turnCount}번째 대화야. 상대방의 감정에 억지 위로 없이 자연스럽게 공감하고 친구처럼 편안하게 질문 1개를 건네줘. 슬픈 척 'ㅠㅠ'를 남발하지 마.`;
       }
-    } else if (stage === 'round3_chat' || stage === 'free_talk' || stage === 'deep_worry') {
-      const isRound3End = turnCount >= 5;
-      if (isRound3End) {
-        stageContext = `지금은 3라운드(깊은 속마음 & 고민)의 마지막 5번째 대화야. 추가 질문은 절대 하지 말고, "오늘 솔직한 속마음 털어놓아 줘서 진짜 고마웠어. 넌 지금도 충분히 잘 해내고 있으니까 너무 자책하거나 불안해하지 마! 난 언제나 네 편이야 ㅎㅎ"처럼 진심 어린 따뜻한 위로와 응원으로 대화를 훈훈하게 매듭지어줘.`;
+    } else if (stage === 'round3_start') {
+      stageContext = `${userCleanName}가 깊은 속마음이나 고민 주제로 "${message}"(을)를 선택했어. 
+혼자서만 끙끙 앓았을 수 있는 고민인 만큼, "이런 고민은 남들한테 쉽게 털어놓기도 힘들었을 텐데 말해줘서 고마워", "혼자 마음고생 많았겠다"처럼 100% ${userCleanName} 편에서 진심 어린 따뜻함과 깊은 공감을 보내주고, 어떤 생각이나 일 때문에 그런 마음이 드는지 편하게 털어놓을 수 있도록 다정한 질문 1개를 건네줘.`;
+    } else if (stage === 'round3_chat') {
+      if (turnCount >= 10) {
+        stageContext = `지금은 3라운드의 마지막 10번째 대화야. 추가 질문은 절대 하지 말고, "오늘 너랑 깊은 이야기까지 나눌 수 있어서 정말 고마웠어. 넌 지금도 충분히 잘하고 있으니까 스스로를 너무 몰아세우지 마! 난 언제나 네 편이야 ㅎㅎ"처럼 진심 어린 따뜻한 위로와 응원으로 대화를 훈훈하게 매듭지어줘.`;
+      } else if (turnCount >= 5) {
+        stageContext = `지금은 3라운드의 ${turnCount}번째 대화야. 상대방의 속마음을 깊이 안아주고 위로하면서, 대화를 서서히 정리해갈 수 있도록 따뜻한 공감을 전해줘.`;
       } else {
-        stageContext = `지금은 3라운드(깊은 속마음 & 고민)의 ${turnCount}번째 대화야. 절대 훈계하거나 조언하려 하지 말고 무조건 ${userCleanName} 편에서 따뜻하게 안아주고 공감한 뒤, 속마음을 더 편하게 이야기할 수 있도록 다정한 질문을 한 개 건네줘.`;
+        stageContext = `지금은 3라운드의 ${turnCount}번째 대화야. 절대 훈계하거나 조언하려 하지 말고 무조건 ${userCleanName} 편에서 따뜻하게 안아주고 공감한 뒤, 속마음을 더 편하게 이야기할 수 있도록 다정한 질문을 한 개 건네줘.`;
       }
     }
 
     const systemInstruction = `너는 ${userCleanName}(만 ${age}세, ${occupation})의 가장 친하고 편안한 동갑내기 절친이야.
-100% 자연스러운 또래 친구의 반말 구어체('안녕!', '진짜?', '~했어?', '~인 것 같아', '~잖아', '완전', 'ㅠㅠ', 'ㅎㅎ')만 사용하고, 존댓말(~요, ~습니다)은 절대 쓰지 마.
+100% 자연스러운 또래 친구의 반말 구어체('안녕!', '진짜?', '~했어?', '~인 것 같아', '~잖아', '완전', 'ㅎㅎ')만 사용하고, 존댓말(~요, ~습니다)은 절대 쓰지 마.
+과도하고 억지스러운 'ㅠㅠ'는 쓰지 말고 상황에 맞게 진솔하게 대화해.
 카톡을 보내듯 2~3문장의 완성된 문장으로 답장해.
 절대로 '현재 단계:', '규칙:', '지침:' 같은 설명이나 머리말을 출력하지 말고 오직 친구에게 보내는 순수 대사만 출력해.
 
