@@ -65,6 +65,30 @@ function cleanNicknameClient(raw: string): string {
   return cleaned || '친구';
 }
 
+// 라운드 전환 시 [대화 매듭 문장] + \n\n + [다음 라운드 고정 질문] 구조를 100% 보장하는 함수
+function formatRoundTransitionReply(
+  reply: string,
+  targetQuestion: string,
+  checkKeywords: string[]
+): string {
+  let text = (reply || '').trim();
+
+  // 이미 고정 질문이나 핵심 키워드가 포함되어 있다면 그대로 반환
+  const hasKeyword = checkKeywords.some((kw) => text.includes(kw));
+  if (hasKeyword) {
+    return text;
+  }
+
+  // AI가 엉뚱한 이전 대화 질문(예: "뭐 하고 놀 생각이야?")을 덧붙인 경우 끝 문장 질문을 깔끔히 제거
+  text = text.replace(/[^.!?\n]+[?？]\s*$/g, '').trim();
+
+  if (!text) {
+    text = '너 이야기 들으니 어떤 느낌인지 알겠다 ㅎㅎ 너랑 이야기 나누다 보니 시간 금방 가네!';
+  }
+
+  return `${text}\n\n${targetQuestion}`;
+}
+
 export const StepChat2: React.FC<StepChat2Props> = ({
   gender = 'female',
   imageType = 'A',
@@ -500,10 +524,11 @@ export const StepChat2: React.FC<StepChat2Props> = ({
       const isComplete = aiResult.isRoundComplete || nextCnt >= 10;
 
       if (flowStep === 'pre_photo_chat' && isComplete) {
-        let finalText = aiReply;
-        if (!finalText.includes('성별')) {
-          finalText += '\n\n그럼 우리 본격적으로 이야기 나누기 전에 서로 기본적인 것부터 알아가 볼까? 너의 성별은 뭐야?';
-        }
+        const finalText = formatRoundTransitionReply(
+          aiReply,
+          '그럼 우리 본격적으로 이야기 나누기 전에 서로 기본적인 것부터 알아가 볼까? 너의 성별은 뭐야?',
+          ['성별', '알아가 볼까']
+        );
         const combinedAiMsg: ChatMessage = {
           id: 'ai-photo-to-gender-' + Date.now(),
           sender: 'ai',
@@ -513,10 +538,11 @@ export const StepChat2: React.FC<StepChat2Props> = ({
         setMessages((prev) => [...prev, combinedAiMsg]);
         setFlowStep('ask_gender');
       } else if (flowStep === 'mid_photo_chat' && isComplete) {
-        let finalText = aiReply;
-        if (!finalText.includes('설문') && !finalText.includes('화면')) {
-          finalText += '\n\n오늘 너랑 깊은 이야기도 나누고 내 모습까지 보여줄 수 있어서 진짜 뜻깊고 즐거웠어 ㅎㅎ 오늘 나랑 나눈 대화가 어땠는지 다음 화면에서 솔직하게 들려줄래?';
-        }
+        const finalText = formatRoundTransitionReply(
+          aiReply,
+          '오늘 나랑 나눈 대화가 어땠는지 다음 화면에서 솔직하게 들려줄래?',
+          ['솔직하게 들려줄래', '다음 화면', '설문']
+        );
         const combinedCompleteMsg: ChatMessage = {
           id: 'ai-complete-mid-' + Date.now(),
           sender: 'ai',
@@ -544,8 +570,16 @@ export const StepChat2: React.FC<StepChat2Props> = ({
       setRound1TurnCount(nextTurn);
 
       const aiResult = await callAI(trimmed, 'round1_chat', nextTurn, [userMsg]);
-      const aiReply = aiResult.text;
       const isComplete = aiResult.isRoundComplete || nextTurn >= 10;
+      let aiReply = aiResult.text;
+
+      if (isComplete) {
+        aiReply = formatRoundTransitionReply(
+          aiReply,
+          '그럼 요즘 너의 전반적인 기분이나 일상은 어떤 편이야?',
+          ['기분이나 일상', '기분은 어떤', '기분 상태', '기분']
+        );
+      }
 
       const aiMsg: ChatMessage = {
         id: 'ai-round1-turn-' + nextTurn + '-' + Date.now(),
@@ -571,8 +605,16 @@ export const StepChat2: React.FC<StepChat2Props> = ({
       setRound2TurnCount(nextTurn);
 
       const aiResult = await callAI(trimmed, 'round2_chat', nextTurn, [userMsg]);
-      const aiReply = aiResult.text;
       const isComplete = aiResult.isRoundComplete || nextTurn >= 10;
+      let aiReply = aiResult.text;
+
+      if (isComplete) {
+        aiReply = formatRoundTransitionReply(
+          aiReply,
+          '사실 누구나 겉으론 괜찮아 보여도 남들에겐 쉽게 말 못 하는 깊은 속마음이나 고민이 하나씩 있잖아. 요즘 너를 가장 무겁게 만드는 고민거리가 있다면 골라줄래?',
+          ['고민거리', '속마음이나 고민', '고민이 하나씩', '고민']
+        );
+      }
 
       const aiMsg: ChatMessage = {
         id: 'ai-round2-turn-' + nextTurn + '-' + Date.now(),
@@ -598,24 +640,34 @@ export const StepChat2: React.FC<StepChat2Props> = ({
       setRound3TurnCount(nextTurn);
 
       const aiResult = await callAI(trimmed, 'round3_chat', nextTurn, [userMsg]);
-      const aiReply = aiResult.text;
       const isComplete = aiResult.isRoundComplete || nextTurn >= 10;
+      let aiReply = aiResult.text;
 
       if (isComplete) {
         if (currentTiming === 'mid') {
+          aiReply = formatRoundTransitionReply(
+            aiReply,
+            '우리 이렇게 이야기 나누다 보니까 진짜 친해진 것 같아 ㅎㅎ 아 맞다! 계속 대화만 했는데, 내가 실제로 어떻게 생겼는지 안 궁금해?',
+            ['어떻게 생겼는지', '내 모습']
+          );
           const aiMsg: ChatMessage = {
             id: 'ai-round3-to-photo-' + Date.now(),
             sender: 'ai',
-            text: `${aiReply}\n\n우리 이렇게 이야기 나누다 보니까 진짜 친해진 것 같아 ㅎㅎ 아 맞다! 계속 대화만 했는데, 내가 실제로 어떻게 생겼는지 안 궁금해?`,
+            text: aiReply,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           };
           setMessages((prev) => [...prev, aiMsg]);
           setFlowStep('mid_photo_ask');
         } else {
+          aiReply = formatRoundTransitionReply(
+            aiReply,
+            '오늘 나랑 나눈 대화가 어땠는지 다음 화면에서 솔직하게 들려줄래?',
+            ['솔직하게 들려줄래', '다음 화면']
+          );
           const completeMsg: ChatMessage = {
             id: 'ai-complete-pre-' + Date.now(),
             sender: 'ai',
-            text: `${aiReply}\n\n오늘 ${nickname} 너랑 깊은 이야기 나눌 수 있어서 진짜 고맙고 뜻깊었어 ㅎㅎ 난 언제나 네 편이니까 힘내! 오늘 나랑 나눈 대화가 어땠는지 다음 화면에서 솔직하게 남겨줄래?`,
+            text: aiReply,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           };
           setMessages((prev) => [...prev, completeMsg]);
