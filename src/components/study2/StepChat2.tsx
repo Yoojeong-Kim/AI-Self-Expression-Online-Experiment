@@ -502,7 +502,7 @@ export const StepChat2: React.FC<StepChat2Props> = ({
       if (flowStep === 'pre_photo_chat' && isComplete) {
         let finalText = aiReply;
         if (!finalText.includes('성별')) {
-          finalText += '\n\n내 모습 좋게 봐줘서 고마워 ㅎㅎ 그럼 우리 본격적으로 이야기 나누기 전에 서로 기본적인 것부터 알아가 볼까? 너의 성별은 뭐야?';
+          finalText += '\n\n그럼 우리 본격적으로 이야기 나누기 전에 서로 기본적인 것부터 알아가 볼까? 너의 성별은 뭐야?';
         }
         const combinedAiMsg: ChatMessage = {
           id: 'ai-photo-to-gender-' + Date.now(),

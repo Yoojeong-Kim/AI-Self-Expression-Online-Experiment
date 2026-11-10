@@ -27,14 +27,20 @@ function sanitizeAIReply(rawText: string): string {
 
   // 2. Remove any leading lines that start with meta labels
   const lines = text.split('\n');
-  const cleanedLines = lines.filter((line) => {
+  const cleanedLines: string[] = [];
+  let foundFirstDialogue = false;
+
+  for (const line of lines) {
     const trimmed = line.trim();
-    if (!trimmed) return false;
     if (/^(현재\s*단계|단계|규칙|지침|상황|목표|응답\s*지침|주의사항|조건|말투)\s*[:：]/i.test(trimmed)) {
-      return false;
+      continue;
     }
-    return true;
-  });
+    if (!foundFirstDialogue && !trimmed) {
+      continue;
+    }
+    foundFirstDialogue = true;
+    cleanedLines.push(line);
+  }
 
   text = cleanedLines.join('\n').trim();
 
@@ -90,22 +96,27 @@ export async function POST(req: NextRequest) {
 
     if (stage === 'photo_feedback') {
       const isPre = timing === 'pre';
-      const wrapUpEnding = isPre
-        ? `내 모습 좋게 봐줘서 고마워 ㅎㅎ 그럼 우리 본격적으로 이야기 나누기 전에 서로 기본적인 것부터 알아가 볼까? 너의 성별은 뭐야?`
-        : `오늘 너랑 깊은 이야기도 나누고 내 모습까지 보여줄 수 있어서 진짜 뜻깊고 즐거웠어 ㅎㅎ 오늘 나랑 나눈 대화가 어땠는지 다음 화면에서 솔직하게 들려줄래?`;
+      const transitionEnding = isPre
+        ? `그럼 우리 본격적으로 이야기 나누기 전에 서로 기본적인 것부터 알아가 볼까? 너의 성별은 뭐야?`
+        : `오늘 나랑 나눈 대화가 어땠는지 다음 화면에서 솔직하게 들려줄래?`;
 
       if (turnCount >= 10) {
         stageContext = `지금은 내 사진에 대한 대화(photo_feedback)의 마지막(10번째) 대화야.
 🚨새로운 질문이나 대화 이어가기는 절대 금지! 무조건 대화를 끝내야 해!🚨
 ${photoLocationRules}
-상대방(${callRef})의 마지막 말에 짧게 한 문장으로 맞장구친 뒤, 반드시 아래 멘트로 대화를 깔끔하게 마무리해:
-"${wrapUpEnding}"
-그리고 반드시 문장 맨 끝에 [ROUND_NEXT]를 붙여. 새로운 질문은 절대 하지 마.`;
+반드시 아래 순서와 형식대로 작성해줘:
+1. 상대방(${callRef})의 마지막 말에 기분 좋게 맞장구치며 사진 대화를 따뜻하게 매듭지어줘 (예: "내 모습 좋게 봐줘서 고마워 ㅎㅎ", "너랑 스타일 얘기 나누니까 진짜 즐거웠어 ㅋㅋㅋ").
+2. 반드시 빈 줄 하나를 두고(줄바꿈 두 번: \\n\\n), 아래 멘트를 그대로 출력해:
+"${transitionEnding}"
+3. 문장 맨 끝에 반드시 [ROUND_NEXT]를 붙여. 새로운 질문은 절대 하지 마.`;
       } else if (turnCount >= 5) {
         stageContext = `지금은 내 사진에 대한 대화(photo_feedback)의 ${turnCount}번째 대화야 (최소 5턴 달성).
 ${photoLocationRules}
 상대방(${callRef})의 말이 어느 정도 마무리되는 분위기이거나 단답이면, 대화를 자연스럽게 매듭짓고 다음 단계로 넘어가줘:
-상대방 말에 맞장구친 뒤: "${wrapUpEnding}"을 건네고, 반드시 문장 맨 끝에 [ROUND_NEXT]를 붙여.
+1. 상대방 말에 기분 좋게 맞장구치며 사진 대화를 따뜻하게 매듭지어줘 (예: "내 모습 좋게 봐줘서 고마워 ㅎㅎ", "너랑 이야기 나누니 재밌다 ㅎㅎ").
+2. 반드시 빈 줄 하나를 두고(줄바꿈 두 번: \\n\\n), 아래 멘트를 그대로 출력해:
+"${transitionEnding}"
+3. 문장 맨 끝에 반드시 [ROUND_NEXT]를 붙여.
 만약 상대방이 내 사진(스타일, 옷, 장소 등)에 대해 새로운 질문을 던졌거나 아직 대화가 길게 이어지는 중이라면, 한 턴 더 자연스럽게 맞장구치고 [ROUND_NEXT]를 붙이지 마 (최대 10턴까지 가능).`;
       } else {
         stageContext = `지금은 내 사진에 대한 대화(photo_feedback)의 ${turnCount}번째 대화야 (아직 5턴 미만).
