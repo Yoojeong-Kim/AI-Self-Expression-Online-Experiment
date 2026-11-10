@@ -490,28 +490,37 @@ export const StepChat2: React.FC<StepChat2Props> = ({
     setInputText('');
     setMessages((prev) => [...prev, userMsg]);
 
-    // 1) Photo chat (Pre or Mid timing) - strictly 2 turns
+    // 1) Photo chat (Pre or Mid timing) - 최소 5턴, 최대 10턴 AI 주도형 자동 전환
     if (flowStep === 'pre_photo_chat' || flowStep === 'mid_photo_chat') {
       const nextCnt = photoFeedbackCount + 1;
       setPhotoFeedbackCount(nextCnt);
 
       const aiResult = await callAI(trimmed, 'photo_feedback', nextCnt, [userMsg]);
       const aiReply = aiResult.text;
+      const isComplete = aiResult.isRoundComplete || nextCnt >= 10;
 
-      if (flowStep === 'pre_photo_chat' && nextCnt >= 2) {
+      if (flowStep === 'pre_photo_chat' && isComplete) {
+        let finalText = aiReply;
+        if (!finalText.includes('성별')) {
+          finalText += '\n\n내 모습 좋게 봐줘서 고마워 ㅎㅎ 그럼 우리 본격적으로 이야기 나누기 전에 서로 기본적인 것부터 알아가 볼까? 너의 성별은 뭐야?';
+        }
         const combinedAiMsg: ChatMessage = {
           id: 'ai-photo-to-gender-' + Date.now(),
           sender: 'ai',
-          text: `${aiReply}\n\n내 모습 좋게 봐줘서 고마워 ㅎㅎ 그럼 우리 서로 기본적인 것부터 알아가 볼까? 너의 성별은 뭐야?`,
+          text: finalText,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => [...prev, combinedAiMsg]);
         setFlowStep('ask_gender');
-      } else if (flowStep === 'mid_photo_chat' && nextCnt >= 2) {
+      } else if (flowStep === 'mid_photo_chat' && isComplete) {
+        let finalText = aiReply;
+        if (!finalText.includes('설문') && !finalText.includes('화면')) {
+          finalText += '\n\n오늘 너랑 깊은 이야기도 나누고 내 모습까지 보여줄 수 있어서 진짜 뜻깊고 즐거웠어 ㅎㅎ 오늘 나랑 나눈 대화가 어땠는지 다음 화면에서 솔직하게 들려줄래?';
+        }
         const combinedCompleteMsg: ChatMessage = {
           id: 'ai-complete-mid-' + Date.now(),
           sender: 'ai',
-          text: `${aiReply}\n\n오늘 ${nickname} 너랑 깊은 이야기도 나누고 내 모습도 보여줄 수 있어서 진짜 뜻깊었어 ㅎㅎ 오늘 나랑 나눈 대화가 어땠는지 다음 화면에서 솔직하게 남겨줄래?`,
+          text: finalText,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => [...prev, combinedCompleteMsg]);
