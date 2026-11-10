@@ -95,11 +95,12 @@ export async function POST(req: NextRequest) {
         : `오늘 너랑 깊은 이야기도 나누고 내 모습까지 보여줄 수 있어서 진짜 뜻깊고 즐거웠어 ㅎㅎ 오늘 나랑 나눈 대화가 어땠는지 다음 화면에서 솔직하게 들려줄래?`;
 
       if (turnCount >= 10) {
-        stageContext = `지금은 내 사진에 대한 대화(photo_feedback)의 최대 10번째 대화야. 무조건 대화를 깔끔하게 마무리해야 해.
+        stageContext = `지금은 내 사진에 대한 대화(photo_feedback)의 마지막(10번째) 대화야.
+🚨새로운 질문이나 대화 이어가기는 절대 금지! 무조건 대화를 끝내야 해!🚨
 ${photoLocationRules}
-상대방(${callRef})의 마지막 말에 기분 좋게 맞장구친 뒤, 반드시 아래 멘트로 대화를 마무리해줘:
+상대방(${callRef})의 마지막 말에 짧게 한 문장으로 맞장구친 뒤, 반드시 아래 멘트로 대화를 깔끔하게 마무리해:
 "${wrapUpEnding}"
-그리고 반드시 문장 맨 끝에 [ROUND_NEXT]를 붙여.`;
+그리고 반드시 문장 맨 끝에 [ROUND_NEXT]를 붙여. 새로운 질문은 절대 하지 마.`;
       } else if (turnCount >= 5) {
         stageContext = `지금은 내 사진에 대한 대화(photo_feedback)의 ${turnCount}번째 대화야 (최소 5턴 달성).
 ${photoLocationRules}
