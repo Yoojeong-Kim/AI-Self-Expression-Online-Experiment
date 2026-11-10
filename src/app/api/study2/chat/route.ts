@@ -19,6 +19,9 @@ function cleanNickname(input: string): string {
 function sanitizeAIReply(rawText: string): string {
   let text = (rawText || '').trim();
 
+  // 0. Unescape literal '\n' if LLM returned it as text
+  text = text.replace(/\\n/g, '\n');
+
   // 1. Remove inline leaked "규칙: ... (응원|마무리|금지|문장|구어체|질문)." patterns
   text = text.replace(
     /^(?:현재\s*단계\s*:[^\n]*\n*)?(?:규칙\s*:|지침\s*:|목표\s*:|톤앤매너\s*:)[\s\S]*?(?:따뜻한\s*응원\.|대화\s*매듭짓기\.|마무리하기\.|질문\s*절대\s*금지!|반말\s*구어체\.|문장\.|\n)/gi,
@@ -46,6 +49,9 @@ function sanitizeAIReply(rawText: string): string {
 
   // 3. Final safety strip if "규칙:" or "현재 단계:" still exists at the very beginning
   text = text.replace(/^(현재\s*단계|규칙|지침)\s*[:：][^\n]*\n*/gi, '').trim();
+
+  // 4. Collapse 3 or more consecutive newlines into double newline
+  text = text.replace(/\n{3,}/g, '\n\n');
 
   return text;
 }
@@ -106,7 +112,7 @@ export async function POST(req: NextRequest) {
 ${photoLocationRules}
 반드시 아래 순서와 형식대로 작성해줘:
 1. 상대방(${callRef})의 마지막 말에 기분 좋게 맞장구치며 사진 대화를 따뜻하게 매듭지어줘 (예: "내 모습 좋게 봐줘서 고마워 ㅎㅎ", "너랑 스타일 얘기 나누니까 진짜 즐거웠어 ㅋㅋㅋ").
-2. 반드시 빈 줄 하나를 두고(줄바꿈 두 번: \\n\\n), 아래 멘트를 그대로 출력해:
+2. 반드시 한 줄 띄우고(줄바꿈), 아래 멘트를 그대로 출력해:
 "${transitionEnding}"
 3. 문장 맨 끝에 반드시 [ROUND_NEXT]를 붙여. 새로운 질문은 절대 하지 마.`;
       } else if (turnCount >= 5) {
@@ -114,7 +120,7 @@ ${photoLocationRules}
 ${photoLocationRules}
 상대방(${callRef})의 말이 어느 정도 마무리되는 분위기이거나 단답이면, 대화를 자연스럽게 매듭짓고 다음 단계로 넘어가줘:
 1. 상대방 말에 기분 좋게 맞장구치며 사진 대화를 따뜻하게 매듭지어줘 (예: "내 모습 좋게 봐줘서 고마워 ㅎㅎ", "너랑 이야기 나누니 재밌다 ㅎㅎ").
-2. 반드시 빈 줄 하나를 두고(줄바꿈 두 번: \\n\\n), 아래 멘트를 그대로 출력해:
+2. 반드시 한 줄 띄우고(줄바꿈), 아래 멘트를 그대로 출력해:
 "${transitionEnding}"
 3. 문장 맨 끝에 반드시 [ROUND_NEXT]를 붙여.
 만약 상대방이 내 사진(스타일, 옷, 장소 등)에 대해 새로운 질문을 던졌거나 아직 대화가 길게 이어지는 중이라면, 한 턴 더 자연스럽게 맞장구치고 [ROUND_NEXT]를 붙이지 마 (최대 10턴까지 가능).`;
